@@ -1,0 +1,1478 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>여성스러운 컴팩트 리마인더 위젯 (V23 - 알림창 내부 통합)</title>
+    <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.8/dist/web/static/pretendard.css" />
+    <style>
+        /* CSS 변수를 위한 루트 요소 정의 */
+        :root {
+            --theme-bg: #f5f0f8; 
+            --theme-accent: #f5f0f8;
+            --theme-border: #d4b8e6;
+            --theme-icon: #a888c9;
+            --theme-line: #d4b8e6;
+            --theme-primary-button: linear-gradient(135deg, #c9a9e9 0%, #b8a5d8 100%);
+            --theme-primary-shadow: rgba(168, 136, 201, 0.3); 
+            --theme-dday-urgent: #cc0052; 
+            --widget-width: 240px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            background: transparent;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 10vh;
+            padding: 20px;
+        }
+        .widget-container {
+            width: var(--widget-width); 
+            background: var(--theme-bg); 
+            border-radius: 4px;
+            padding: 16px;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            position: relative; 
+            overflow: hidden; 
+            max-height: 500px; 
+            min-height: 100px;
+        }
+        .widget-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .widget-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #3a3a3a;
+            letter-spacing: -0.3px;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .add-btn { 
+            width: 24px;
+            height: 24px;
+            background: none;
+            border: none; 
+            color: var(--theme-icon);
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 400;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: none;
+        }
+        .add-btn:hover {
+            opacity: 0.7;
+            transform: translateY(0); 
+        }
+        .add-btn:active {
+            opacity: 1;
+            transform: translateY(0);
+            box-shadow: none; 
+        }
+        .color-picker-btn {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%; 
+            background: var(--theme-bg);
+            border: 2px solid white; 
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); 
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .color-picker-btn:hover {
+            transform: scale(1.1);
+        }
+        .color-picker-btn:active {
+            transform: scale(1.0);
+        }
+        .reminder-list {
+            max-height: 380px;
+            overflow-y: auto;
+            padding-right: 4px;
+            margin-bottom: 8px;
+        }
+        .reminder-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .reminder-list::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.03);
+            border-radius: 2px;
+        }
+        .reminder-list::-webkit-scrollbar-thumb {
+            background: var(--theme-icon);
+            opacity: 0.3;
+            border-radius: 2px;
+        }
+        .reminder-list::-webkit-scrollbar-thumb:hover {
+            opacity: 0.5;
+        }
+        .reminder-group { 
+            margin-bottom: 8px;
+            cursor: default;
+        }
+        .reminder-item { 
+            padding: 6px 6px;
+            display: flex;
+            align-items: center; 
+            gap: 8px;
+            cursor: pointer; 
+            transition: all 0.2s ease;
+            border-radius: 2px;
+            border: 1px solid transparent; 
+        }
+        .reminder-item:hover {
+            background: rgba(0, 0, 0, 0.02);
+        }
+        
+        .reminder-item.completed {
+            opacity: 0.5;
+        }
+        .reminder-item.completed .reminder-text {
+            text-decoration: line-through;
+            color: #888;
+        }
+        .reminder-item.important {
+            background: var(--theme-accent); 
+        }
+        .reminder-item.important:hover {
+             background: var(--theme-accent); 
+             filter: brightness(0.98);
+        }
+        
+        .color-tag {
+            width: 10px; 
+            height: 10px; 
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 1px solid currentColor;
+            position: relative;
+            transform: translateY(-0.5px);
+            display: flex; 
+            align-items: center;
+            justify-content: center;
+            color: black; 
+        }
+        
+        .color-tag.is-project {
+            cursor: pointer;
+            box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.05); 
+        }
+        .color-tag .toggle-icon {
+            font-size: 6px; 
+            font-weight: 900;
+            color: inherit; 
+            transition: transform 0.2s;
+            line-height: 1;
+        }
+        .color-tag[data-collapsed="false"] .toggle-icon {
+            transform: translateY(1px) rotate(90deg);
+        }
+        .color-tag[data-collapsed="true"] .toggle-icon {
+            transform: translateY(0) rotate(0deg);
+        }
+
+
+        .star-btn {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            position: relative;
+            transform: translateY(-0.5px); 
+        }
+        .star-btn svg path {
+            stroke: var(--theme-icon) !important;
+        }
+        .star-btn:hover {
+            transform: translateY(-0.5px) scale(1.2);
+        }
+        .reminder-content { 
+            flex: 1; 
+            min-width: 0;
+        }
+        .reminder-text {
+            font-size: 12.5px;
+            color: #2a2a2a;
+            word-break: break-word;
+            line-height: 1.4;
+            font-weight: 500;
+        }
+        .reminder-dday { 
+            font-size: 10.5px;
+            color: #999;
+            font-weight: 600;
+            white-space: nowrap;
+            flex-shrink: 0;
+            padding: 2px 6px;
+            background: rgba(0, 0, 0, 0.04);
+            border-radius: 2px;
+        }
+        .reminder-dday.urgent {
+            color: #fff;
+            background: var(--theme-dday-urgent);
+        }
+        .reminder-dday.past {
+            color: #fff;
+            background: #a00030;
+        }
+        .delete-btn {
+            font-size: 12px; 
+            color: #ddd;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            font-weight: 300;
+            line-height: 1; 
+            transform: translateY(-0.0px); 
+        }
+        .delete-btn:hover {
+            color: var(--theme-icon);
+            opacity: 0.7;
+            transform: translateY(-0.0px) scale(1.1);
+        }
+        
+        .child-items { 
+            margin-left: 30px;
+            padding-left: 12px;
+            margin-bottom: 0px; 
+            border-left: 1px solid rgba(0, 0, 0, 0.05); 
+            transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+            max-height: 300px;
+            overflow: hidden;
+        }
+        
+        .child-items[data-collapsed="true"] {
+            max-height: 0; 
+            opacity: 0;
+            margin-bottom: 0;
+        }
+        
+        .child-item {
+            padding: 3px 6px 3px 0; 
+            margin-bottom: 0px; 
+            display: flex;
+            align-items: center; 
+            gap: 6px;
+            font-size: 11.5px;
+            color: #666;
+            line-height: 1.4;
+        }
+        .complete-checkbox {
+            width: 14px;
+            height: 14px;
+            accent-color: var(--theme-icon); 
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+        .child-item span {
+            font-size: 12px;
+            color: #666;
+            flex: 1;
+        }
+        
+        .modal { 
+            display: none;
+            position: fixed; 
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.2); 
+            backdrop-filter: blur(2px);
+            justify-content: center;
+            align-items: center;
+            z-index: 2000; 
+        }
+        .modal.active {
+            display: flex;
+        }
+        .modal-content {
+            background: white; 
+            border-radius: 6px;
+            padding: 16px;
+            width: 90%;
+            max-width: 260px; 
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        #inputLayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--theme-bg); 
+            z-index: 1000; 
+            padding: 16px;
+            border-radius: 4px;
+            overflow-y: auto;
+            display: none;
+            flex-direction: column;
+        }
+        #inputLayer.active {
+            display: flex;
+        }
+        
+        #validationMessage {
+            color: var(--theme-dday-urgent); 
+            font-size: 11px;
+            font-weight: 500;
+            margin-top: 5px;
+            display: none;
+            padding-left: 2px;
+        }
+
+        .modal-title { 
+            font-size: 15px;
+            font-weight: 700;
+            color: #3a3a3a;
+            margin-bottom: 16px;
+            letter-spacing: -0.3px;
+        }
+        .input-group {
+            margin-bottom: 14px;
+        }
+        .input-label {
+            display: block;
+            font-size: 12px;
+            color: #555;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        .text-input, .date-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1.5px solid #e8e8e8;
+            border-radius: 3px;
+            font-size: 13px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .text-input:focus, .date-input:focus {
+            outline: none;
+            border-color: var(--theme-icon);
+            box-shadow: 0 0 0 3px rgba(168, 136, 201, 0.1);
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center; 
+            gap: 7px;
+            margin-bottom: 14px;
+        }
+        .checkbox-group input[type="checkbox"] {
+            width: 15px;
+            height: 15px;
+            accent-color: var(--theme-icon); 
+            cursor: pointer;
+        }
+        .checkbox-group label {
+            font-size: 12px;
+            color: #555;
+            cursor: pointer;
+            font-weight: 500;
+            padding-top: 1px; 
+        }
+        .child-list {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        .child-input-group {
+            display: flex;
+            align-items: center; 
+            gap: 6px;
+            margin-bottom: 6px;
+        }
+        .modal-buttons { 
+            display: flex;
+            gap: 8px;
+            margin-top: 16px;
+        }
+        .btn {
+            flex: 1;
+            padding: 9px;
+            border: none;
+            border-radius: 3px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .btn-primary {
+            background: var(--theme-primary-button);
+            color: white;
+        }
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--theme-primary-shadow); 
+        }
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+        .btn-secondary:hover {
+            background: #e8e8e8;
+        }
+        .color-palette {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 10px;
+            margin-top: 14px;
+        }
+        .color-option {
+            width: 30px; 
+            height: 30px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+            justify-self: center;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1); 
+        }
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        .color-option.selected {
+            border-color: #555;
+            box-shadow: 0 0 0 1px white;
+        }
+        .small-btn {
+            padding: 5px 10px;
+            font-size: 11px;
+            background: var(--theme-icon);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .add-child-btn {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+        .confirm-modal-content {
+            padding: 20px;
+            text-align: center;
+        }
+        .confirm-modal-content p {
+            font-size: 14px;
+            color: #444;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+        .child-item-draggable {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 6px;
+            padding: 4px;
+            background: white; 
+            border-radius: 3px;
+            cursor: grab; 
+            transition: border 0.1s;
+            border: 1px solid transparent;
+        }
+        .child-item-draggable.dragging {
+            opacity: 0.5;
+            transform: rotate(0.5deg);
+        }
+        .child-item-draggable .child-text {
+            flex: 1; 
+            font-size: 12px; 
+            color: #666;
+            padding-top: 1px;
+        }
+        .handle {
+            width: 16px;
+            height: 16px;
+            color: #bbb;
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            line-height: 1;
+        }
+        .child-delete-btn {
+            font-size: 12px;
+            color: #ddd;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            font-weight: 300;
+            line-height: 1; 
+            transform: translateY(-0.0px); 
+            padding: 0 4px;
+        }
+        .child-delete-btn:hover {
+            color: #cc0052; 
+            opacity: 0.9;
+        }
+        
+        .widget-footer {
+            display: flex;
+            flex-wrap: wrap; 
+            gap: 6px; 
+            padding-top: 8px;
+            border-top: 1px solid rgba(0, 0, 0, 0.06);
+        }
+        .filter-btn {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 4px 8px;
+            border: none;
+            border-radius: 3px;
+            background: #f0f0f0;
+            color: #666;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex; 
+            align-items: center;
+        }
+        .filter-btn.tag-filter {
+            width: 28px; 
+            height: 28px; 
+            padding: 0;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%; 
+            background: transparent; 
+        }
+        .filter-btn.tag-filter .tag-color-indicator {
+             margin-right: 0; 
+        }
+
+        .filter-btn .tag-color-indicator {
+            width: 10px; 
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 4px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+        }
+        .filter-btn.active {
+            background: var(--theme-icon);
+            color: white;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+        .filter-btn.active .tag-color-indicator {
+            border: 1px solid white; 
+        }
+        .filter-btn:hover:not(.active) {
+            background: #e8e8e8;
+        }
+        .filter-btn.tag-filter:hover:not(.active) {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        #tagColorPalette {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr); 
+            gap: 8px;
+            margin-top: 10px;
+            margin-bottom: 15px;
+        }
+        .tag-color-option {
+            width: 28px; 
+            height: 28px; 
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s, border-color 0.2s;
+        }
+        .tag-color-option:hover {
+            transform: scale(1.1);
+        }
+        .tag-color-option.selected {
+            border-color: #555;
+            box-shadow: 0 0 0 1px white;
+        }
+    </style>
+</head>
+<body>
+    <div class="widget-container" id="widget">
+        <div class="input-layer" id="inputLayer">
+            <div class="modal-title" id="modalTitle">리마인더 추가</div>
+            <div class="input-group">
+                <label class="input-label">할 일</label>
+                <input type="text" class="text-input" id="reminderText" placeholder="무엇을 해야 하나요?">
+                <div id="validationMessage"></div>
+            </div>
+            
+            <div class="input-group">
+                <label class="input-label">색상 태그</label>
+                <div id="tagColorPalette"></div>
+            </div>
+
+            <div class="input-group">
+                <label class="input-label">마감일</label>
+                <input type="date" class="date-input" id="reminderDate">
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="isImportant">
+                <label for="isImportant">중요 표시</label>
+            </div>
+            <div class="checkbox-group">
+                <input type="checkbox" id="hasChildren">
+                <label for="hasChildren">프로젝트 (하위 항목 추가)</label>
+            </div>
+            <div class="child-list" id="childList" style="display: none;">
+                <div class="child-input-group">
+                    <input type="text" class="text-input" id="childInput" placeholder="하위 항목 입력">
+                    <button class="small-btn add-child-btn" id="addChildBtn">+</button>
+                </div>
+                <div id="sortableChildItems"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" id="cancelBtn">취소</button>
+                <button class="btn btn-primary" id="saveBtn">저장</button>
+            </div>
+        </div>
+        
+        <div id="listArea">
+            <div class="widget-header">
+                <div class="widget-title">My Reminders</div> 
+                <div class="header-right">
+                    <button class="add-btn" id="addBtn">+</button>
+                    <div class="color-picker-btn" id="colorBtn"></div>
+                </div>
+            </div>
+            <div class="reminder-list" id="reminderList"></div>
+            
+            <div class="widget-footer" id="filterContainer">
+                 <button class="filter-btn active" data-filter="all" id="filterAll">전체</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal" id="colorModal">
+        <div class="modal-content">
+            <div class="modal-title">위젯 색상 선택</div>
+            <div class="color-palette" id="colorPalette"></div>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" id="closeColorBtn">닫기</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal" id="confirmModal">
+        <div class="modal-content confirm-modal-content">
+            <p id="confirmMessage">이 항목을 정말로 삭제하시겠습니까?</p>
+            <div class="modal-buttons">
+                <button class="btn btn-secondary" id="confirmCancelBtn">취소</button>
+                <button class="btn btn-primary" id="confirmDeleteBtn">삭제</button> 
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let reminders = [];
+        let editingId = null;
+        let tempChildren = []; 
+        let deleteTargetId = null; 
+        let selectedTagColor = '#FFFFFF'; 
+        let currentTagFilter = 'all';
+        let validationTimeout = null;
+
+        const TAG_COLORS = [
+            '#FFFFFF', 
+            '#FF8C9D', 
+            '#FFD45F', 
+            '#90EE90', 
+            '#77B5D9'  
+        ]; 
+        
+        const colors = [
+            { name: '라벤더', bg: '#f5f0f8', accent: '#f5f0f8', border: '#d4b8e6', icon: '#a888c9', line: '#d4b8e6', primary: 'linear-gradient(135deg, #c9a9e9 0%, #b8a5d8 100%)', primaryShadow: 'rgba(168, 136, 201, 0.3)', urgent: '#cc0052' },
+            { name: '로즈', bg: '#fce9f0', accent: '#ffe8f0', border: '#ffc2d9', icon: '#ff8fb3', line: '#ffc2d9', primary: 'linear-gradient(135deg, #ff8fb3 0%, #ff6b9d 100%)', primaryShadow: 'rgba(255, 143, 179, 0.3)', urgent: '#cc0052' },
+            { name: '민트', bg: '#e9f5ed', accent: '#e0f9e8', border: '#b3e6c7', icon: '#6bc98e', line: '#b3e6c7', primary: 'linear-gradient(135deg, #6bc98e 0%, #4db570 100%)', primaryShadow: 'rgba(107, 201, 142, 0.3)', urgent: '#e65200' },
+            { name: '피치', bg: '#fcf0e7', accent: '#ffe9d5', border: '#ffc899', icon: '#ff9d52', line: '#ffc899', primary: 'linear-gradient(135deg, #ff9d52 0%, #ff852b 100%)', primaryShadow: 'rgba(255, 157, 82, 0.3)', urgent: '#cc0052' },
+            { name: '스카이', bg: '#e7f3fd', accent: '#dbeef9', border: '#a8d8f0', icon: '#5eb3d6', line: '#a8d8f0', primary: 'linear-gradient(135deg, #5eb3d6 0%, #4298bf 100%)', primaryShadow: 'rgba(94, 179, 214, 0.3)', urgent: '#e65200' },
+            { name: '릴락', bg: '#f0e5ff', accent: '#f0e5ff', border: '#d4b8f0', icon: '#a788d1', line: '#d4b8f0', primary: 'linear-gradient(135deg, #a788d1 0%, #8d73b8 100%)', primaryShadow: 'rgba(167, 136, 209, 0.3)', urgent: '#cc0052' },
+            { name: '코랄', bg: '#fce4e5', accent: '#ffe0e3', border: '#ffb3bb', icon: '#ff7785', line: '#ffb3bb', primary: 'linear-gradient(135deg, #ff7785 0%, #ff5c6d 100%)', primaryShadow: 'rgba(255, 119, 133, 0.3)', urgent: '#cc0052' },
+            { name: '레몬', bg: '#f7f2d3', accent: '#fef9c3', border: '#f5e87a', icon: '#e0c83d', line: '#f5e87a', primary: 'linear-gradient(135deg, #e0c83d 0%, #c9b335 100%)', primaryShadow: 'rgba(224, 200, 61, 0.3)', urgent: '#cc0052' },
+            { name: '아쿠아', bg: '#e3f7f9', accent: '#cff5f7', border: '#8ed9e0', icon: '#3fb3c2', line: '#8ed9e0', primary: 'linear-gradient(135deg, #3fb3c2 0%, #2a94a0 100%)', primaryShadow: 'rgba(63, 179, 194, 0.3)', urgent: '#e65200' },
+            { name: '블러쉬', bg: '#f7e7f1', accent: '#fce4f0', border: '#f5b8d9', icon: '#e880b3', line: '#f5b8d9', primary: 'linear-gradient(135deg, #e880b3 0%, #d4659b 100%)', primaryShadow: 'rgba(232, 128, 179, 0.3)', urgent: '#cc0052' }
+        ];
+        let currentTheme = colors[0];
+        const root = document.documentElement;
+        
+        const sortableChildItems = document.getElementById('sortableChildItems'); 
+        
+        function hexToRgba(hex, alpha) {
+            if (!hex || hex.length < 7) return `rgba(0, 0, 0, ${alpha})`;
+            let r = 0, g = 0, b = 0;
+            hex = hex.substring(1);
+
+            if (hex.length === 3) {
+                r = parseInt(hex.charAt(0) + hex.charAt(0), 16);
+                g = parseInt(hex.charAt(1) + hex.charAt(1), 16);
+                b = parseInt(hex.charAt(2) + hex.charAt(2), 16);
+            } else if (hex.length === 6) {
+                r = parseInt(hex.substring(0, 2), 16);
+                g = parseInt(hex.substring(2, 4), 16);
+                b = parseInt(hex.substring(4, 6), 16);
+            } else {
+                return `rgba(0, 0, 0, ${alpha})`;
+            }
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+
+        // 🎨 위젯 색상 팔레트 초기화
+        const colorPalette = document.getElementById('colorPalette');
+        colors.forEach((color, index) => {
+            const option = document.createElement('div');
+            option.className = 'color-option';
+            option.style.background = color.bg;
+            if (index === 0) option.classList.add('selected');
+            option.addEventListener('click', () => selectColor(color, option));
+            colorPalette.appendChild(option);
+        });
+        
+        // 🎨 항목 태그 색상 팔레트 초기화
+        const tagColorPalette = document.getElementById('tagColorPalette');
+        TAG_COLORS.forEach(hex => {
+            const option = document.createElement('div');
+            option.className = 'tag-color-option';
+            option.style.backgroundColor = hex;
+            if (hex === selectedTagColor) option.classList.add('selected'); 
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectTagColor(hex, option);
+            });
+            tagColorPalette.appendChild(option);
+        });
+
+        function selectTagColor(hex, element) {
+            document.querySelectorAll('.tag-color-option').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            selectedTagColor = hex;
+        }
+
+        function selectColor(theme, element) {
+            document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            currentTheme = theme;
+
+            root.style.setProperty('--theme-bg', theme.bg);
+            root.style.setProperty('--theme-accent', theme.accent);
+            root.style.setProperty('--theme-border', theme.border);
+            root.style.setProperty('--theme-icon', theme.icon);
+            root.style.setProperty('--theme-line', theme.line);
+            root.style.setProperty('--theme-primary-button', theme.primary);
+            root.style.setProperty('--theme-primary-shadow', theme.primaryShadow); 
+            root.style.setProperty('--theme-dday-urgent', theme.urgent); 
+            
+            document.getElementById('colorBtn').style.background = theme.bg;
+
+            renderReminders();
+            saveData(); 
+        }
+        
+        function saveData() {
+            try {
+                const dataSize = JSON.stringify(reminders).length;
+                if (dataSize > 5 * 1024 * 1024) {
+                    console.warn('Data size approaching limit:', dataSize);
+                }
+                
+                localStorage.setItem('myReminders', JSON.stringify(reminders));
+                localStorage.setItem('myReminderTheme', JSON.stringify(currentTheme));
+                localStorage.setItem('currentTagFilter', currentTagFilter);
+            } catch (e) {
+                console.error('Storage failed:', e);
+                if (e.name === 'QuotaExceededError') {
+                    alert('⚠️ 저장 공간이 부족합니다. 일부 항목을 삭제해주세요.');
+                    const completedItems = reminders.filter(r => {
+                        const isProject = r.children?.length > 0;
+                        return isProject ? r.children.every(c => c.completed) : r.completed;
+                    }).sort((a, b) => a.id - b.id);
+                    
+                    if (completedItems.length > 0) {
+                        reminders = reminders.filter(r => r.id !== completedItems[0].id);
+                        saveData();
+                        renderReminders();
+                    }
+                } else {
+                    alert('저장 중 오류가 발생했습니다.');
+                }
+            }
+        }
+
+        function loadData() {
+            try {
+                const savedReminders = localStorage.getItem('myReminders');
+                if (savedReminders) {
+                    reminders = JSON.parse(savedReminders).map(r => {
+                        if (r.children && r.children.length > 0) {
+                            r.children = r.children.map(c => ({
+                                id: c.id || Date.now() + Math.random(),
+                                text: c.text,
+                                completed: c.completed || false
+                            }));
+                        }
+                        
+                        if (r.children && typeof r.collapsed === 'undefined') {
+                            r.collapsed = false; 
+                        }
+                        if (!r.children || r.children.length === 0) {
+                            r.completed = typeof r.completed === 'undefined' ? false : r.completed;
+                        }
+                        return r;
+                    });
+                }
+                
+                const savedTheme = localStorage.getItem('myReminderTheme');
+                if (savedTheme) {
+                    const theme = JSON.parse(savedTheme);
+                    const themeIndex = colors.findIndex(c => c.name === theme.name);
+                    const optionElements = document.querySelectorAll('.color-option');
+                    
+                    if (themeIndex !== -1 && optionElements[themeIndex]) {
+                        selectColor(colors[themeIndex], optionElements[themeIndex]);
+                    }
+                }
+                
+                const savedFilter = localStorage.getItem('currentTagFilter'); 
+                if (savedFilter) {
+                    currentTagFilter = savedFilter;
+                }
+            } catch (e) {
+                console.error('Failed to load data:', e);
+                alert('데이터를 불러오는 중 오류가 발생했습니다. 초기화됩니다.');
+                reminders = [];
+            }
+            
+            renderFilterButtons();
+            renderReminders(); 
+        }
+
+        function toggleChildren(id) {
+            const reminder = reminders.find(r => r.id === id);
+            if (reminder) {
+                reminder.collapsed = !reminder.collapsed; 
+                
+                const childrenContainer = document.querySelector(`.reminder-group[data-id="${id}"] .child-items`);
+                const colorTag = document.querySelector(`.reminder-group[data-id="${id}"] .color-tag`);
+                
+                if (childrenContainer) {
+                    childrenContainer.setAttribute('data-collapsed', reminder.collapsed);
+                }
+                if (colorTag) {
+                     colorTag.setAttribute('data-collapsed', reminder.collapsed);
+                }
+
+                saveData();
+            }
+        }
+
+
+        function createStarIcon(isFilled) {
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('viewBox', '0 0 24 24');
+            svg.setAttribute('fill', isFilled ? currentTheme.icon : 'none'); 
+            svg.setAttribute('stroke', currentTheme.icon);
+            svg.setAttribute('stroke-width', '2');
+            svg.setAttribute('stroke-linecap', 'round');
+            svg.setAttribute('stroke-linejoin', 'round');
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z');
+
+            svg.appendChild(path);
+            return svg;
+        }
+        
+        function calculateDday(dateString) {
+            if (!dateString) return { text: '', diff: null };
+            
+            if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+                console.warn('Invalid date format:', dateString);
+                return { text: '', diff: null };
+            }
+            
+            const today = new Date();
+            today.setHours(0, 0, 0, 0); 
+
+            const parts = dateString.split('-');
+            if (parts.length !== 3) return { text: '', diff: null };
+            
+            const targetDate = new Date(parts[0], parts[1] - 1, parts[2]);
+            
+            if (isNaN(targetDate.getTime())) {
+                console.warn('Invalid date:', dateString);
+                return { text: '', diff: null };
+            }
+
+            const diff = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
+
+            let text;
+            if (diff === 0) text = 'D-Day';
+            else if (diff < 0) text = `D+${Math.abs(diff)}`;
+            else text = `D-${diff}`;
+            
+            return { text, diff };
+        }
+
+        function filterRemindersByTag(reminder) {
+            if (currentTagFilter === 'all') return true;
+            
+            return reminder.tagColor?.toUpperCase() === currentTagFilter.toUpperCase();
+        }
+
+        function toggleChildCompleted(parentId, childIndex) {
+            const reminder = reminders.find(r => r.id === parentId);
+            if (!reminder || !reminder.children || !reminder.children[childIndex]) return;
+
+            const child = reminder.children[childIndex];
+            child.completed = !child.completed;
+            
+            renderReminders();
+            saveData();
+        }
+
+        function renderReminders() {
+            const list = document.getElementById('reminderList');
+            list.innerHTML = '';
+            
+            const filtered = reminders.filter(filterRemindersByTag); 
+
+            const sorted = [...filtered].sort((a, b) => {
+                
+                if (a.important !== b.important) return b.important - a.important;
+                
+                const isACompleted = a.children?.length > 0 ? a.children.every(c => c.completed) : a.completed;
+                const isBCompleted = b.children?.length > 0 ? b.children.every(c => c.completed) : b.completed;
+                if (isACompleted !== isBCompleted) return isACompleted - isBCompleted; 
+                
+                return b.id - a.id; 
+            });
+
+            const themeIconColorRgba = hexToRgba(currentTheme.icon, 0.5);
+
+            sorted.forEach(reminder => {
+                const isProject = reminder.children && reminder.children.length > 0;
+                let isCompleted = isProject ? reminder.children.every(c => c.completed) : reminder.completed;
+                
+                const reminderGroup = document.createElement('div');
+                reminderGroup.className = 'reminder-group';
+                reminderGroup.setAttribute('data-id', reminder.id); 
+                
+                const item = document.createElement('div');
+                item.className = 'reminder-item' + (isCompleted ? ' completed' : '');
+                item.setAttribute('data-id', reminder.id); 
+                
+                if (reminder.important) {
+                    item.classList.add('important');
+                }
+                
+                const tagColor = reminder.tagColor || '#FFFFFF';
+                const colorTag = document.createElement('div');
+                colorTag.className = 'color-tag';
+                colorTag.style.backgroundColor = tagColor; 
+                
+                
+                if (isProject) {
+                    colorTag.classList.add('is-project');
+                    colorTag.setAttribute('data-collapsed', reminder.collapsed);
+                    
+                    colorTag.style.borderColor = tagColor;
+                    colorTag.style.color = tagColor.toUpperCase() === '#FFFFFF' ? '#555' : tagColor;
+
+                    const toggleIcon = document.createElement('span');
+                    toggleIcon.className = 'toggle-icon';
+                    toggleIcon.textContent = '▶'; 
+                    colorTag.appendChild(toggleIcon);
+                    
+                    colorTag.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        toggleChildren(reminder.id);
+                    });
+                } else {
+                    if (tagColor.toUpperCase() === '#FFFFFF') {
+                         colorTag.style.width = '7px'; 
+                         colorTag.style.height = '7px'; 
+                         colorTag.style.opacity = '0.5';
+                         colorTag.style.borderColor = themeIconColorRgba;
+                    } else {
+                        colorTag.style.borderColor = themeIconColorRgba; 
+                    }
+                }
+                
+                item.appendChild(colorTag);
+
+
+                const ddayInfo = calculateDday(reminder.date);
+                const ddayText = ddayInfo.text;
+                const ddayDiff = ddayInfo.diff;
+                
+                const isUrgent = reminder.date && (ddayDiff !== null && ddayDiff >= 0 && ddayDiff <= 3); 
+                const isPast = ddayDiff !== null && ddayDiff < 0; 
+
+                const starBtn = document.createElement('div');
+                starBtn.className = 'star-btn';
+                starBtn.appendChild(createStarIcon(reminder.important));
+                starBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    toggleImportant(reminder.id);
+                });
+                item.appendChild(starBtn);
+
+
+                const content = document.createElement('div');
+                content.className = 'reminder-content';
+                content.innerHTML = `<div class="reminder-text">${reminder.text}</div>`;
+                item.appendChild(content);
+
+                const deleteBtn = document.createElement('div');
+                deleteBtn.className = 'delete-btn';
+                deleteBtn.textContent = '✕';
+
+                if (reminder.date) {
+                    const ddayEl = document.createElement('div');
+                    
+                    let ddayClass = 'reminder-dday';
+                    if (isPast) {
+                        ddayClass += ' past';
+                    } else if (isUrgent && !isCompleted) { 
+                        ddayClass += ' urgent';
+                    }
+                    
+                    ddayEl.className = ddayClass; 
+                    ddayEl.textContent = ddayText;
+                    
+                    item.appendChild(ddayEl); 
+                }
+
+                item.appendChild(deleteBtn);
+                
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    confirmDelete(reminder.id, reminder.text);
+                });
+                
+                item.addEventListener('click', (e) => {
+                    if (!e.target.closest('.color-tag') && !e.target.closest('.delete-btn')) {
+                         editReminder(reminder.id);
+                    }
+                }); 
+                
+                reminderGroup.appendChild(item);
+
+                if (isProject) {
+                    const childContainer = document.createElement('div');
+                    childContainer.className = 'child-items';
+                    childContainer.setAttribute('data-collapsed', reminder.collapsed); 
+                    
+                    reminder.children.forEach((child, index) => {
+                        const childItem = document.createElement('div');
+                        childItem.className = 'child-item';
+                        
+                        const childCheckbox = document.createElement('input');
+                        childCheckbox.type = 'checkbox';
+                        childCheckbox.className = 'complete-checkbox'; 
+                        childCheckbox.checked = child.completed;
+                        childCheckbox.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            toggleChildCompleted(reminder.id, index); 
+                        });
+                        childItem.appendChild(childCheckbox);
+                        
+                        const textSpan = document.createElement('span');
+                        textSpan.textContent = child.text;
+                        textSpan.style.textDecoration = child.completed ? 'line-through' : 'none';
+                        textSpan.style.color = child.completed ? '#888' : '#666';
+
+                        childItem.appendChild(textSpan);
+                        
+                        if (child.completed) {
+                            childItem.style.opacity = 0.7; 
+                        }
+
+                        childContainer.appendChild(childItem);
+                    });
+                    reminderGroup.appendChild(childContainer);
+                }
+                list.appendChild(reminderGroup);
+            });
+            
+            renderFilterButtons();
+        }
+        
+        function confirmDelete(id, text) {
+            deleteTargetId = id;
+            document.getElementById('confirmMessage').innerHTML = `"${text}" 항목을 정말로 삭제하시겠습니까?`;
+            document.getElementById('confirmModal').classList.add('active');
+        }
+
+        function toggleImportant(id) {
+            const reminder = reminders.find(r => r.id === id);
+            if (reminder) {
+                reminder.important = !reminder.important;
+                renderReminders();
+                saveData(); 
+            }
+        }
+
+        function deleteReminder(id) {
+            reminders = reminders.filter(r => r.id !== id);
+            renderReminders();
+            saveData(); 
+        }
+        
+        document.getElementById('confirmDeleteBtn').addEventListener('click', () => {
+            if (deleteTargetId !== null) {
+                deleteReminder(deleteTargetId);
+            }
+            deleteTargetId = null;
+            document.getElementById('confirmModal').classList.remove('active');
+        });
+
+        document.getElementById('confirmCancelBtn').addEventListener('click', () => {
+            deleteTargetId = null;
+            document.getElementById('confirmModal').classList.remove('active');
+        });
+
+        function editReminder(id) {
+            const reminder = reminders.find(r => r.id === id);
+            if (!reminder) return;
+            editingId = id;
+            
+            tempChildren = reminder.children?.map(c => ({
+                id: c.id || Date.now() + Math.random(),
+                text: c.text,
+                completed: c.completed || false
+            })) || [];
+            
+            selectedTagColor = reminder.tagColor || '#FFFFFF';
+            document.querySelectorAll('.tag-color-option').forEach(el => el.classList.remove('selected'));
+            const selectedEl = Array.from(document.querySelectorAll('.tag-color-option')).find(el => {
+                const elColor = el.style.backgroundColor;
+                const rgb = elColor.match(/\d+/g);
+                if (rgb) {
+                    const hex = '#' + rgb.map(x => parseInt(x).toString(16).padStart(2, '0')).join('').toUpperCase();
+                    return hex === selectedTagColor.toUpperCase();
+                }
+                return elColor.toUpperCase() === selectedTagColor.toUpperCase();
+            });
+            if (selectedEl) selectedEl.classList.add('selected');
+
+            document.getElementById('modalTitle').textContent = '리마인더 수정';
+            document.getElementById('reminderText').value = reminder.text;
+            document.getElementById('reminderDate').value = reminder.date || '';
+            document.getElementById('isImportant').checked = reminder.important;
+            document.getElementById('hasChildren').checked = reminder.children?.length > 0;
+
+            document.getElementById('childList').style.display = reminder.children?.length > 0 ? 'block' : 'none';
+            renderTempChildren();
+
+            document.getElementById('inputLayer').classList.add('active');
+            document.getElementById('validationMessage').style.display = 'none';
+        }
+
+        function renderTempChildren() {
+            const container = sortableChildItems;
+            container.innerHTML = '';
+            
+            tempChildren.forEach((child, index) => {
+                const item = document.createElement('div');
+                item.className = 'child-item-draggable';
+                item.setAttribute('draggable', 'true');
+                item.dataset.childId = child.id;
+                
+                item.innerHTML = `
+                    <div class="handle">☰</div>
+                    <span class="child-text">${child.text}</span>
+                    <div class="child-delete-btn" data-child-id="${child.id}">✕</div>
+                `;
+                
+                item.querySelector('.child-delete-btn').addEventListener('click', (e) => {
+                    e.stopPropagation(); 
+                    
+                    const childId = e.target.dataset.childId;
+                    const targetIndex = tempChildren.findIndex(c => c.id == childId);
+                    if (targetIndex > -1) {
+                        tempChildren.splice(targetIndex, 1);
+                    }
+                    
+                    renderTempChildren();
+                });
+                
+                item.addEventListener('dragstart', handleDragStart);
+                item.addEventListener('dragover', handleDragOver);
+                item.addEventListener('drop', handleDrop);
+                item.addEventListener('dragend', handleDragEnd);
+
+                container.appendChild(item);
+            });
+        }
+        
+        let draggedItem = null;
+        function handleDragStart(e) {
+            draggedItem = this;
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', this.dataset.childId);
+            setTimeout(() => this.classList.add('dragging'), 0);
+        }
+        function handleDragOver(e) {
+            e.preventDefault(); 
+            const afterElement = getDragAfterElement(sortableChildItems, e.clientY);
+            const currentItem = draggedItem; 
+            if (afterElement == null) {
+                sortableChildItems.appendChild(currentItem);
+            } else {
+                sortableChildItems.insertBefore(currentItem, afterElement);
+            }
+        }
+        function handleDrop(e) {
+            e.preventDefault();
+            
+            const newOrderIds = [];
+            Array.from(sortableChildItems.children).forEach(childEl => {
+                newOrderIds.push(childEl.dataset.childId);
+            });
+
+            const newTempChildren = newOrderIds.map(id => {
+                return tempChildren.find(child => child.id == id);
+            }).filter(Boolean); 
+            
+            tempChildren = newTempChildren;
+            
+            renderTempChildren();
+        }
+
+        function handleDragEnd(e) {
+            this.classList.remove('dragging');
+            draggedItem = null; 
+        }
+
+        function getDragAfterElement(container, y) {
+            const draggableElements = [...container.querySelectorAll('.child-item-draggable:not(.dragging)')];
+            return draggableElements.reduce((closest, child) => {
+                const box = child.getBoundingClientRect();
+                const offset = y - box.top - box.height / 2;
+                if (offset < 0 && offset > closest.offset) {
+                    return { offset: offset, element: child };
+                } else {
+                    return closest;
+                }
+            }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+        
+        document.getElementById('addBtn').addEventListener('click', () => {
+            editingId = null;
+            tempChildren = [];
+            selectedTagColor = '#FFFFFF';
+            
+            document.getElementById('modalTitle').textContent = '리마인더 추가';
+            document.getElementById('reminderText').value = '';
+            document.getElementById('reminderDate').value = '';
+            document.getElementById('isImportant').checked = false;
+            document.getElementById('hasChildren').checked = false;
+            document.getElementById('childList').style.display = 'none';
+            
+            document.querySelectorAll('.tag-color-option').forEach(el => el.classList.remove('selected'));
+            const defaultTag = Array.from(document.querySelectorAll('.tag-color-option')).find(el => el.style.backgroundColor.toUpperCase() === '#FFFFFF');
+            if (defaultTag) {
+                 defaultTag.classList.add('selected');
+            }
+
+            document.getElementById('inputLayer').classList.add('active');
+            document.getElementById('validationMessage').style.display = 'none';
+        });
+
+        document.getElementById('hasChildren').addEventListener('change', (e) => {
+            document.getElementById('childList').style.display = e.target.checked ? 'block' : 'none';
+        });
+
+        document.getElementById('childInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault(); 
+                document.getElementById('addChildBtn').click(); 
+            }
+        });
+
+        document.getElementById('addChildBtn').addEventListener('click', () => {
+            const input = document.getElementById('childInput');
+            if (input.value.trim()) {
+                tempChildren.push({ 
+                    id: Date.now() + Math.random(),
+                    text: input.value.trim(), 
+                    completed: false 
+                });
+                input.value = '';
+                renderTempChildren();
+                input.focus(); 
+            }
+        });
+
+        function showValidationMessage(message) {
+            const msgEl = document.getElementById('validationMessage');
+            msgEl.textContent = message;
+            msgEl.style.display = 'block';
+            
+            if (validationTimeout) {
+                clearTimeout(validationTimeout);
+            }
+            
+            validationTimeout = setTimeout(() => {
+                msgEl.style.display = 'none';
+                msgEl.textContent = ''; 
+                validationTimeout = null;
+            }, 3000); 
+        }
+
+        document.getElementById('saveBtn').addEventListener('click', () => {
+            const text = document.getElementById('reminderText').value.trim();
+            if (!text) { 
+                showValidationMessage('할 일을 입력해주세요!');
+                return;
+            }
+            
+            const isProject = document.getElementById('hasChildren').checked;
+            const existingReminder = editingId ? reminders.find(r => r.id === editingId) : null;
+
+            let finalChildren = [];
+            let isCompleted = false;
+            const collapsedState = existingReminder ? existingReminder.collapsed : false;
+
+            if (isProject) {
+                finalChildren = tempChildren;
+                isCompleted = finalChildren.length > 0 && finalChildren.every(c => c.completed);
+            } else {
+                isCompleted = existingReminder && !existingReminder.children ? existingReminder.completed : false;
+            }
+            
+            const newReminder = {
+                id: editingId || Date.now(),
+                text: text,
+                date: document.getElementById('reminderDate').value,
+                important: document.getElementById('isImportant').checked,
+                tagColor: selectedTagColor, 
+                children: finalChildren,
+                completed: isCompleted, 
+                collapsed: collapsedState 
+            };
+            
+            if (editingId) {
+                const index = reminders.findIndex(r => r.id === editingId);
+                reminders[index] = newReminder;
+            } else {
+                reminders.push(newReminder);
+            }
+            
+            document.getElementById('inputLayer').classList.remove('active');
+            document.getElementById('validationMessage').style.display = 'none';
+            
+            if (validationTimeout) {
+                clearTimeout(validationTimeout);
+                validationTimeout = null;
+            }
+            
+            renderReminders();
+            saveData();
+        });
+
+        document.getElementById('cancelBtn').addEventListener('click', () => {
+            document.getElementById('inputLayer').classList.remove('active');
+            document.getElementById('validationMessage').style.display = 'none';
+            
+            if (validationTimeout) {
+                clearTimeout(validationTimeout);
+                validationTimeout = null;
+            }
+        });
+
+        document.getElementById('colorBtn').addEventListener('click', () => {
+            document.getElementById('inputLayer').classList.remove('active'); 
+            document.getElementById('colorModal').classList.add('active');
+        });
+
+        document.getElementById('closeColorBtn').addEventListener('click', () => {
+            document.getElementById('colorModal').classList.remove('active');
+        });
+
+        function renderFilterButtons() {
+            const container = document.getElementById('filterContainer');
+            container.innerHTML = '';
+
+            const allBtn = document.createElement('button');
+            allBtn.className = 'filter-btn' + (currentTagFilter === 'all' ? ' active' : '');
+            allBtn.dataset.filter = 'all';
+            allBtn.textContent = '전체';
+            allBtn.addEventListener('click', () => setTagFilter('all'));
+            container.appendChild(allBtn);
+
+            const activeTags = [...new Set(reminders.map(r => r.tagColor).filter(color => color && color.toUpperCase() !== '#FFFFFF'))];
+            
+            const themeIconColorRgba = hexToRgba(currentTheme.icon, 0.5); 
+            
+            activeTags.forEach(tagColor => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn tag-filter' + (tagColor.toUpperCase() === currentTagFilter.toUpperCase() ? ' active' : '');
+                btn.dataset.filter = tagColor;
+                btn.addEventListener('click', () => setTagFilter(tagColor));
+                
+                const indicator = document.createElement('span');
+                indicator.className = 'tag-color-indicator';
+                indicator.style.backgroundColor = tagColor;
+                
+                indicator.style.borderColor = themeIconColorRgba; 
+
+                btn.appendChild(indicator);
+                
+                container.appendChild(btn);
+            });
+        }
+        
+        function setTagFilter(filterColor) {
+            currentTagFilter = filterColor;
+            renderReminders();
+            saveData();
+        }
+
+        loadData();
+        
+        const initialThemeIndex = colors.findIndex(c => c.name === currentTheme.name);
+        if (initialThemeIndex !== -1) {
+             document.querySelectorAll('.color-option')[initialThemeIndex].classList.add('selected');
+             document.getElementById('colorBtn').style.background = currentTheme.bg;
+        } else {
+            selectColor(colors[0], document.querySelectorAll('.color-option')[0]);
+        }
+        
+        const defaultTagElement = Array.from(document.querySelectorAll('.tag-color-option')).find(el => el.style.backgroundColor.toUpperCase() === '#FFFFFF');
+        if(defaultTagElement) defaultTagElement.classList.add('selected');
+    </script>
+</body>
+</html>
