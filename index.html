@@ -385,7 +385,27 @@
             padding: 20px;
             width: 90%;
             max-width: 320px;
+            max-height: 80vh;
+            overflow-y: auto;
             box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 3px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: rgba(201, 169, 233, 0.4);
+            border-radius: 3px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(201, 169, 233, 0.6);
         }
 
         .modal-title {
@@ -465,6 +485,26 @@
             padding: 12px;
             background: #f9f9f9;
             border-radius: 4px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .child-list::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .child-list::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 2px;
+        }
+
+        .child-list::-webkit-scrollbar-thumb {
+            background: rgba(201, 169, 233, 0.4);
+            border-radius: 2px;
+        }
+
+        .child-list::-webkit-scrollbar-thumb:hover {
+            background: rgba(201, 169, 233, 0.6);
         }
 
         .child-input-group {
