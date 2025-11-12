@@ -3,635 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>리마인더 위젯</title>
+    <title>리마인더 위젯 (패치)</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background: transparent;
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 20px;
-            margin: 0;
-        }
-
-        .widget-container {
-            width: 100%;
-            max-width: 400px;
-            min-width: 220px;
-            background: #fdfbfb;
-            border-radius: 4px;
-            padding: 16px;
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            box-sizing: border-box;
-        }
-
-        .widget-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 12px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-        }
-
-        .widget-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: #3a3a3a;
-            letter-spacing: -0.3px;
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .add-btn {
-            width: 24px;
-            height: 24px;
-            background: transparent;
-            border: none;
-            border-radius: 8px;
-            color: #a888c9;
-            font-size: 16px;
-            font-weight: 400;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .add-btn:hover {
-            transform: scale(1.1);
-        }
-
-        .add-btn:active {
-            transform: scale(0.95);
-        }
-
-        .color-picker-btn {
-            width: 22px;
-            height: 22px;
-            border-radius: 50%;
-            border: 3px solid rgba(255, 255, 255, 0.9);
-            cursor: pointer;
-            transition: transform 0.2s;
-            position: relative;
-        }
-
-        .color-picker-btn::before {
-            content: '';
-            position: absolute;
-            inset: -3px;
-            border-radius: 50%;
-            background: inherit;
-            z-index: -1;
-        }
-
-        .color-picker-btn:hover {
-            transform: scale(1.1);
-        }
-
-        .color-picker-btn:active {
-            transform: scale(1.0);
-        }
-
-        .filter-bar {
-            display: flex;
-            gap: 4px;
-            margin-bottom: 10px;
-            flex-wrap: wrap;
-        }
-
-        .filter-btn {
-            padding: 4px 8px;
-            font-size: 11px;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 500;
-        }
-
-        .filter-btn.active {
-            color: white;
-        }
-
-        .reminder-list {
-            max-height: 450px;
-            overflow-y: auto;
-            padding-right: 4px;
-        }
-
-        .reminder-list::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-
-        .reminder-list::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.03);
-            border-radius: 2px;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #999;
-        }
-
-        .empty-state-icon {
-            font-size: 32px;
-            margin-bottom: 10px;
-            opacity: 0.5;
-        }
-
-        .empty-state-text {
-            font-size: 13px;
-            line-height: 1.6;
-        }
-
-        .reminder-item {
-            padding: 6px 6px;
-            margin-bottom: 2px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: move;
-            transition: all 0.2s ease;
-            border-radius: 2px;
-            position: relative;
-        }
-
-        .reminder-item.dragging {
-            opacity: 0.5;
-            background: rgba(0, 0, 0, 0.05);
-        }
-
-        .reminder-item.drag-over {
-            border-top: 2px solid #c9a9e9;
-        }
-
-        .reminder-item.has-children {
-            margin-bottom: 0;
-        }
-
-        .reminder-item.urgent-alert {
-            background: rgba(255, 107, 157, 0.1);
-            border-left: 3px solid #ff6b9d;
-            padding-left: 3px;
-        }
-
-        .toggle-btn {
-            width: 14px;
-            height: 14px;
-            cursor: pointer;
-            flex-shrink: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 10px;
-            transition: all 0.2s;
-        }
-
-        .toggle-btn.collapsed {
-            transform: rotate(-90deg);
-        }
-
-        .star-btn {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-            transition: all 0.2s;
-            flex-shrink: 0;
-            position: relative;
-        }
-
-        .star-btn svg {
-            width: 100%;
-            height: 100%;
-            display: block;
-        }
-
-        .star-btn:hover {
-            transform: scale(1.2);
-        }
-
-        .star-btn:active {
-            transform: scale(1.1);
-        }
-
-        .reminder-content {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .reminder-text {
-            font-size: 12.5px;
-            color: #2a2a2a;
-            word-break: break-word;
-            line-height: 1.4;
-            font-weight: 500;
-        }
-
-        .reminder-dday {
-            font-size: 10.5px;
-            font-weight: 600;
-            white-space: nowrap;
-            flex-shrink: 0;
-            padding: 2px 6px;
-            border-radius: 2px;
-        }
-
-        .reminder-dday.future {
-            color: #999;
-            background: rgba(0, 0, 0, 0.04);
-        }
-
-        .reminder-dday.today {
-            color: #fff;
-            background: linear-gradient(135deg, #ff6b9d 0%, #ff8fb3 100%);
-        }
-
-        .reminder-dday.past {
-            color: #fff;
-            background: linear-gradient(135deg, #a888c9 0%, #b8a5d8 100%);
-        }
-
-        .delete-btn {
-            font-size: 18px;
-            color: #ddd;
-            cursor: pointer;
-            transition: all 0.2s;
-            flex-shrink: 0;
-            font-weight: 300;
-        }
-
-        .delete-btn:hover {
-            color: #ff6b9d;
-            transform: scale(1.1);
-        }
-
-        .delete-btn:active {
-            transform: scale(1.0);
-        }
-
-        .child-items {
-            margin-left: 38px;
-            padding-left: 12px;
-            border-left: 2px solid rgba(0, 0, 0, 0.1);
-            margin-bottom: 4px;
-            overflow: hidden;
-            max-height: 0;
-            transition: max-height 0.3s ease;
-        }
-
-        .child-items.expanded {
-            max-height: 1000px;
-        }
-
-        .child-item {
-            padding: 5px 6px;
-            margin-bottom: 2px;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 11.5px;
-            color: #666;
-            line-height: 1.4;
-        }
-
-        .child-item.completed {
-            opacity: 0.5;
-        }
-
-        .child-item.completed .child-text {
-            text-decoration: line-through;
-        }
-
-        .child-checkbox {
-            width: 14px;
-            height: 14px;
-            cursor: pointer;
-            flex-shrink: 0;
-        }
-
-        .child-text {
-            flex: 1;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            backdrop-filter: blur(4px);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 6px;
-            padding: 20px;
-            width: 90%;
-            max-width: 320px;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
-            transition: border-color 0.2s;
-        }
-
-        .modal-content.themed {
-            border: 2px solid;
-        }
-
-        .modal-content::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-
-        .modal-content::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.05);
-            border-radius: 3px;
-        }
-
-        .modal-content::-webkit-scrollbar-thumb {
-            background: rgba(201, 169, 233, 0.4);
-            border-radius: 3px;
-        }
-
-        .modal-content::-webkit-scrollbar-thumb:hover {
-            background: rgba(201, 169, 233, 0.6);
-        }
-
-        .modal-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: #3a3a3a;
-            margin-bottom: 16px;
-            letter-spacing: -0.3px;
-        }
-
-        .input-group {
-            margin-bottom: 14px;
-        }
-
-        .input-label {
-            display: block;
-            font-size: 12px;
-            color: #555;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-
-        .text-input {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1.5px solid #e8e8e8;
-            border-radius: 3px;
-            font-size: 13px;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-
-        .text-input:focus {
-            outline: none;
-            border-color: #c9a9e9;
-            box-shadow: 0 0 0 3px rgba(201, 169, 233, 0.1);
-        }
-
-        .date-input {
-            width: 100%;
-            padding: 8px 10px;
-            border: 1.5px solid #e8e8e8;
-            border-radius: 3px;
-            font-size: 13px;
-            font-family: inherit;
-            transition: all 0.2s;
-        }
-
-        .date-input:focus {
-            outline: none;
-            border-color: #c9a9e9;
-            box-shadow: 0 0 0 3px rgba(201, 169, 233, 0.1);
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            margin-bottom: 14px;
-        }
-
-        .checkbox-group input[type="checkbox"] {
-            width: 15px;
-            height: 15px;
-            cursor: pointer;
-        }
-
-        .checkbox-group label {
-            font-size: 12px;
-            color: #555;
-            cursor: pointer;
-            font-weight: 500;
-        }
-
-        .child-list {
-            margin-top: 12px;
-            padding: 12px;
-            background: #f9f9f9;
-            border-radius: 4px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .child-list::-webkit-scrollbar {
-            width: 4px;
-            height: 4px;
-        }
-
-        .child-list::-webkit-scrollbar-track {
-            background: rgba(0, 0, 0, 0.05);
-            border-radius: 2px;
-        }
-
-        .child-list::-webkit-scrollbar-thumb {
-            background: rgba(201, 169, 233, 0.4);
-            border-radius: 2px;
-        }
-
-        .child-list::-webkit-scrollbar-thumb:hover {
-            background: rgba(201, 169, 233, 0.6);
-        }
-
-        .child-input-group {
-            display: flex;
-            gap: 6px;
-            margin-bottom: 6px;
-            align-items: center;
-        }
-
-        .child-input-group .text-input {
-            flex: 1;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 8px;
-            margin-top: 16px;
-        }
-
-        .btn {
-            flex: 1;
-            padding: 9px;
-            border: none;
-            border-radius: 3px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-family: inherit;
-        }
-
-        .btn-primary {
-            color: white;
-            transition: all 0.2s;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(185, 165, 216, 0.3);
-        }
-
-        .btn-primary:active {
-            transform: translateY(0);
-        }
-
-        .btn-secondary {
-            background: #f5f5f5;
-            color: #666;
-        }
-
-        .btn-secondary:hover {
-            background: #e8e8e8;
-        }
-
-        .color-palette {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 10px;
-            margin-top: 14px;
-        }
-
-        .color-option {
-            width: 100%;
-            aspect-ratio: 1;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid transparent;
-            transition: all 0.2s;
-        }
-
-        .color-option:hover {
-            transform: scale(1.1);
-        }
-
-        .color-option.selected {
-            border-color: #555;
-        }
-
-        .small-btn {
-            padding: 5px 10px;
-            font-size: 11px;
-            color: white;
-            border: none;
-            border-radius: 3px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-
-        .add-child-btn {
-            width: 26px;
-            height: 26px;
-            padding: 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            flex-shrink: 0;
-            background: transparent;
-            transition: all 0.2s;
-        }
-
-        .add-child-btn:hover {
-            transform: scale(1.15);
-        }
-
-        .add-child-btn:active {
-            transform: scale(1.0);
-        }
-
-        @media (max-width: 350px) {
-            .widget-container {
-                padding: 10px;
-                min-width: 200px;
-            }
-            
-            .widget-title {
-                font-size: 13px;
-            }
-            
-            .add-btn, .color-picker-btn {
-                width: 20px;
-                height: 20px;
-            }
-            
-            .add-btn {
-                font-size: 14px;
-            }
-            
-            .filter-btn {
-                font-size: 10px;
-                padding: 3px 5px;
-            }
-            
-            .reminder-text {
-                font-size: 11.5px;
-            }
-            
-            .reminder-dday {
-                font-size: 9.5px;
-            }
-            
-            .reminder-list {
-                max-height: 350px;
-            }
-        }
-
-        @media (min-width: 400px) {
-            .reminder-list {
-                max-height: 500px;
-            }
-        }
+        /* (원본 CSS를 대부분 유지) */
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:transparent;font-family:'Pretendard',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;padding:20px;margin:0}
+        .widget-container{width:100%;max-width:400px;min-width:220px;background:#fdfbfb;border-radius:4px;padding:16px;border:1px solid rgba(0,0,0,0.08);box-sizing:border-box}
+        .widget-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid rgba(0,0,0,0.06)}
+        .widget-title{font-size:15px;font-weight:700;color:#3a3a3a;letter-spacing:-0.3px}
+        .header-right{display:flex;align-items:center;gap:6px}
+        .add-btn{width:24px;height:24px;background:transparent;border:none;border-radius:8px;color:#a888c9;font-size:16px;font-weight:400;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center}
+        .add-btn:hover{transform:scale(1.1)}
+        .add-btn:active{transform:scale(.95)}
+        .color-picker-btn{width:22px;height:22px;border-radius:50%;border:3px solid rgba(255,255,255,.9);cursor:pointer;transition:transform .2s;position:relative}
+        .color-picker-btn::before{content:'';position:absolute;inset:-3px;border-radius:50%;background:inherit;z-index:-1}
+        .color-picker-btn:hover{transform:scale(1.1)}
+        .filter-bar{display:flex;gap:4px;margin-bottom:10px;flex-wrap:wrap}
+        .filter-btn{padding:4px 8px;font-size:11px;border:none;border-radius:3px;cursor:pointer;transition:all .2s;font-weight:500}
+        .filter-btn.active{color:white}
+        .reminder-list{max-height:450px;overflow-y:auto;padding-right:4px}
+        .reminder-list::-webkit-scrollbar{width:4px;height:4px}
+        .reminder-list::-webkit-scrollbar-track{background:rgba(0,0,0,.03);border-radius:2px}
+        .empty-state{text-align:center;padding:40px 20px;color:#999}
+        .empty-state-icon{font-size:32px;margin-bottom:10px;opacity:.5}
+        .empty-state-text{font-size:13px;line-height:1.6}
+        .reminder-item{padding:6px 6px;margin-bottom:2px;display:flex;align-items:center;gap:8px;cursor:move;transition:all .2s ease;border-radius:2px;position:relative}
+        .reminder-item.dragging{opacity:.5;background:rgba(0,0,0,.05)}
+        .reminder-item.drag-over{border-top:2px solid #c9a9e9}
+        .reminder-item.has-children{margin-bottom:0}
+        .reminder-item.urgent-alert{background:rgba(255,107,157,.1);border-left:3px solid #ff6b9d;padding-left:3px}
+        .toggle-btn{width:14px;height:14px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:10px;transition:all .2s}
+        .toggle-btn.collapsed{transform:rotate(-90deg)}
+        .star-btn{width:16px;height:16px;cursor:pointer;transition:all .2s;flex-shrink:0;position:relative}
+        .star-btn svg{width:100%;height:100%;display:block}
+        .star-btn:hover{transform:scale(1.2)}
+        .star-btn:active{transform:scale(1.1)}
+        .reminder-content{flex:1;min-width:0}
+        .reminder-text{font-size:12.5px;color:#2a2a2a;word-break:break-word;line-height:1.4;font-weight:500}
+        .reminder-dday{font-size:10.5px;font-weight:600;white-space:nowrap;flex-shrink:0;padding:2px 6px;border-radius:2px}
+        .reminder-dday.future{color:#999;background:rgba(0,0,0,.04)}
+        .reminder-dday.today{color:#fff;background:linear-gradient(135deg,#ff6b9d 0%,#ff8fb3 100%)}
+        .reminder-dday.past{color:#fff;background:linear-gradient(135deg,#a888c9 0%,#b8a5d8 100%)}
+        .delete-btn{font-size:18px;color:#ddd;cursor:pointer;transition:all .2s;flex-shrink:0;font-weight:300}
+        .delete-btn:hover{color:#ff6b9d;transform:scale(1.1)}
+        .delete-btn:active{transform:scale(1)}
+        .child-items{margin-left:38px;padding-left:12px;border-left:2px solid rgba(0,0,0,.1);margin-bottom:4px;overflow:hidden;max-height:0;transition:max-height .3s ease}
+        .child-items.expanded{max-height:1000px}
+        .child-item{padding:5px 6px;margin-bottom:2px;display:flex;align-items:center;gap:6px;font-size:11.5px;color:#666;line-height:1.4}
+        .child-item.completed{opacity:.5}
+        .child-item.completed .child-text{text-decoration:line-through}
+        .child-checkbox{width:14px;height:14px;cursor:pointer;flex-shrink:0}
+        .child-text{flex:1}
+        .modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.5);backdrop-filter:blur(4px);justify-content:center;align-items:center;z-index:1000}
+        .modal.active{display:flex}
+        .modal-content{background:white;border-radius:6px;padding:20px;width:90%;max-width:320px;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);transition:border-color .2s}
+        .modal-content.themed{border:2px solid}
+        .modal-title{font-size:15px;font-weight:700;color:#3a3a3a;margin-bottom:16px;letter-spacing:-0.3px}
+        .input-group{margin-bottom:14px}
+        .input-label{display:block;font-size:12px;color:#555;margin-bottom:5px;font-weight:600}
+        .text-input{width:100%;padding:8px 10px;border:1.5px solid #e8e8e8;border-radius:3px;font-size:13px;transition:all .2s;font-family:inherit}
+        .text-input:focus{outline:none;border-color:#c9a9e9;box-shadow:0 0 0 3px rgba(201,169,233,.1)}
+        .date-input{width:100%;padding:8px 10px;border:1.5px solid #e8e8e8;border-radius:3px;font-size:13px;font-family:inherit;transition:all .2s}
+        .date-input:focus{outline:none;border-color:#c9a9e9;box-shadow:0 0 0 3px rgba(201,169,233,.1)}
+        .checkbox-group{display:flex;align-items:center;gap:7px;margin-bottom:14px}
+        .checkbox-group input[type="checkbox"]{width:15px;height:15px;cursor:pointer}
+        .checkbox-group label{font-size:12px;color:#555;cursor:pointer;font-weight:500}
+        .child-list{margin-top:12px;padding:12px;background:#f9f9f9;border-radius:4px;max-height:200px;overflow-y:auto}
+        .child-input-group{display:flex;gap:6px;margin-bottom:6px;align-items:center}
+        .modal-buttons{display:flex;gap:8px;margin-top:16px}
+        .btn{flex:1;padding:9px;border:none;border-radius:3px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;font-family:inherit}
+        .btn-primary{color:white;transition:all .2s}
+        .btn-primary:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(185,165,216,.3)}
+        .btn-secondary{background:#f5f5f5;color:#666}
+        .color-palette{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:14px}
+        .color-option{width:100%;aspect-ratio:1;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:all .2s}
+        .small-btn{padding:5px 10px;font-size:11px;color:white;border:none;border-radius:3px;cursor:pointer;font-weight:600;transition:all .2s}
+        .add-child-btn{width:26px;height:26px;padding:0;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;background:transparent;transition:all .2s}
+        @media (max-width:350px){.widget-container{padding:10px;min-width:200px}.widget-title{font-size:13px}.add-btn,.color-picker-btn{width:20px;height:20px}.add-btn{font-size:14px}.filter-btn{font-size:10px;padding:3px 5px}.reminder-text{font-size:11.5px}.reminder-dday{font-size:9.5px}.reminder-list{max-height:350px}}
+        @media (min-width:400px){.reminder-list{max-height:500px}}
     </style>
 </head>
 <body>
@@ -640,52 +89,43 @@
             <div class="widget-title">My Reminders</div>
             <div class="header-right">
                 <button class="add-btn" id="addBtn">+</button>
-                <div class="color-picker-btn" id="colorBtn" style="background: #fdfbfb;"></div>
+                <div class="color-picker-btn" id="colorBtn" style="background:#fdfbfb"></div>
             </div>
         </div>
-        
         <div class="filter-bar">
             <button class="filter-btn active" data-filter="all">전체</button>
             <button class="filter-btn" data-filter="important">중요</button>
             <button class="filter-btn" data-filter="project">프로젝트</button>
         </div>
-        
         <div class="reminder-list" id="reminderList"></div>
     </div>
 
-    <!-- 추가/수정 모달 -->
     <div class="modal" id="reminderModal">
         <div class="modal-content">
             <div class="modal-title" id="modalTitle">리마인더 추가</div>
-            
             <div class="input-group">
                 <label class="input-label">할 일</label>
                 <input type="text" class="text-input" id="reminderText" placeholder="무엇을 해야 하나요?">
             </div>
-
             <div class="input-group">
                 <label class="input-label">마감일</label>
                 <input type="date" class="date-input" id="reminderDate">
             </div>
-
             <div class="checkbox-group">
                 <input type="checkbox" id="isImportant">
                 <label for="isImportant">중요 표시</label>
             </div>
-
             <div class="checkbox-group">
                 <input type="checkbox" id="hasChildren">
                 <label for="hasChildren">프로젝트 (하위 항목 추가)</label>
             </div>
-
-            <div class="child-list" id="childList" style="display: none;">
+            <div class="child-list" id="childList" style="display:none">
                 <div class="child-input-group">
                     <input type="text" class="text-input" id="childInput" placeholder="하위 항목 입력">
                     <button class="small-btn add-child-btn" id="addChildBtn">+</button>
                 </div>
                 <div id="childItems"></div>
             </div>
-
             <div class="modal-buttons">
                 <button class="btn btn-secondary" id="cancelBtn">취소</button>
                 <button class="btn btn-primary" id="saveBtn">저장</button>
@@ -693,7 +133,6 @@
         </div>
     </div>
 
-    <!-- 색상 선택 모달 -->
     <div class="modal" id="colorModal">
         <div class="modal-content">
             <div class="modal-title">위젯 색상 선택</div>
@@ -705,6 +144,16 @@
     </div>
 
     <script>
+    (function(){
+        'use strict';
+
+        // 안전한 UUID 생성 (지원 안되면 fallback)
+        function generateId(){
+            if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+            return 'id-' + Date.now().toString(36) + '-' + Math.floor(Math.random()*1e9).toString(36);
+        }
+
+        // 데이터와 상태
         let reminders = [];
         let editingId = null;
         let tempChildren = [];
@@ -726,759 +175,311 @@
 
         let currentTheme = colors[0];
 
-        // 하위 항목 데이터 정규화
-        function normalizeChild(child) {
-            if (typeof child === 'string') {
-                return { text: child, completed: false };
-            }
-            if (child && typeof child === 'object' && child.text) {
-                return { text: child.text, completed: child.completed || false };
-            }
+        // 유틸: 안전하게 요소 선택
+        function $id(id){const el=document.getElementById(id);if(!el)console.error('요소 없음:',id);return el}
+
+        // 하위 항목 정규화
+        function normalizeChild(child){
+            if (typeof child === 'string') return { text: child, completed: false };
+            if (child && typeof child === 'object' && 'text' in child) return { text: child.text || '', completed: !!child.completed };
             return { text: '', completed: false };
         }
 
-        // 리마인더 데이터 정규화
-        function normalizeReminder(reminder) {
-            if (!reminder || typeof reminder !== 'object') {
-                return null;
-            }
-            
+        function normalizeReminder(reminder){
+            if (!reminder || typeof reminder !== 'object') return null;
             return {
-                id: reminder.id || Date.now(),
+                id: reminder.id || generateId(),
                 text: reminder.text || '',
                 date: reminder.date || '',
-                important: reminder.important || false,
+                important: !!reminder.important,
                 children: Array.isArray(reminder.children) ? reminder.children.map(normalizeChild) : [],
-                collapsed: reminder.collapsed || false
+                collapsed: !!reminder.collapsed
             };
         }
 
-        // 로컬 스토리지에서 데이터 로드
-        function loadFromStorage() {
-            try {
+        // 저장/로드 (예외 처리 강화)
+        function loadFromStorage(){
+            try{
                 const saved = localStorage.getItem('reminders');
                 const savedTheme = localStorage.getItem('currentTheme');
-                
-                if (saved) {
+                if (saved){
                     const parsed = JSON.parse(saved);
-                    if (Array.isArray(parsed)) {
-                        reminders = parsed.map(normalizeReminder).filter(r => r !== null);
-                    }
+                    if (Array.isArray(parsed)) reminders = parsed.map(normalizeReminder).filter(r=>r!==null);
                 }
-                
-                if (savedTheme) {
-                    const themeIndex = parseInt(savedTheme);
-                    if (!isNaN(themeIndex) && themeIndex >= 0 && themeIndex < colors.length) {
-                        currentTheme = colors[themeIndex];
-                    }
+                if (savedTheme){
+                    const idx = parseInt(savedTheme);
+                    if (!isNaN(idx) && idx>=0 && idx<colors.length) currentTheme = colors[idx];
                 }
-            } catch (e) {
-                console.error('로컬 스토리지 로드 오류:', e);
+            }catch(e){
+                console.error('로컬 스토리지 로드 실패:',e);
                 reminders = [];
                 currentTheme = colors[0];
             }
         }
 
-        // 로컬 스토리지에 저장
-        function saveToStorage() {
-            try {
+        function saveToStorage(){
+            try{
                 localStorage.setItem('reminders', JSON.stringify(reminders));
-            } catch (e) {
-                console.error('로컬 스토리지 저장 오류:', e);
+            }catch(e){
+                console.error('로컬 스토리지 저장 실패:',e);
+                try{ localStorage.removeItem('reminders'); }catch(_){}
+                alert('데이터 저장에 실패했습니다. 저장 공간이 부족할 수 있습니다.');
             }
         }
 
-        // DOM 요소 안전하게 가져오기
-        function getElement(id) {
-            const element = document.getElementById(id);
-            if (!element) {
-                console.error(`요소를 찾을 수 없습니다: ${id}`);
-            }
-            return element;
-        }
-
-        // 초기 색상 팔레트 생성
-        const colorPalette = getElement('colorPalette');
-        if (colorPalette) {
-            colors.forEach((color, index) => {
+        // 색상 팔레트 생성
+        const colorPalette = $id('colorPalette');
+        if (colorPalette){
+            colors.forEach((color,index)=>{
                 const option = document.createElement('div');
-                option.className = 'color-option';
+                option.className='color-option';
                 option.style.background = color.display;
-                if (index === colors.indexOf(currentTheme)) {
-                    option.classList.add('selected');
-                }
-                option.addEventListener('click', () => selectColor(color, option, index));
+                if (index === colors.indexOf(currentTheme)) option.classList.add('selected');
+                option.addEventListener('click', ()=> selectColor(color, option, index));
                 colorPalette.appendChild(option);
             });
         }
 
-        function applyTheme(theme) {
-            const widget = getElement('widget');
-            const colorBtn = getElement('colorBtn');
-            const addBtn = getElement('addBtn');
-            
+        // 테마 적용 (중복 스타일 덮어쓰기 방식으로 개선)
+        function applyTheme(theme){
+            const widget = $id('widget');
+            const colorBtn = $id('colorBtn');
+            const addBtn = $id('addBtn');
             if (widget) widget.style.background = theme.bg;
             if (colorBtn) colorBtn.style.background = theme.bg;
             if (addBtn) addBtn.style.color = theme.icon;
-            
-            // 필터 버튼 색상 적용
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                if (btn.classList.contains('active')) {
-                    btn.style.background = theme.icon;
-                    btn.style.color = 'white';
-                } else {
-                    btn.style.background = theme.accent;
-                    btn.style.color = theme.icon;
-                }
+
+            document.querySelectorAll('.filter-btn').forEach(btn=>{
+                if (btn.classList.contains('active')){ btn.style.background = theme.icon; btn.style.color = 'white'; }
+                else { btn.style.background = theme.accent; btn.style.color = theme.icon; }
             });
-            
-            // 모달창 테마 적용
-            document.querySelectorAll('.modal-content').forEach(modal => {
-                modal.classList.add('themed');
-                modal.style.borderColor = theme.border;
-            });
-            
-            // 저장/추가 버튼 색상 적용
-            document.querySelectorAll('.btn-primary').forEach(btn => {
-                btn.style.background = theme.icon;
-            });
-            
-            // 하위 항목 추가 버튼 색상 적용
-            document.querySelectorAll('.add-child-btn').forEach(btn => {
-                btn.style.color = theme.icon;
-            });
-            
-            // 입력 필드 포커스 색상 적용
-            const style = document.createElement('style');
-            style.id = 'dynamic-theme-style';
-            const existingStyle = document.getElementById('dynamic-theme-style');
-            if (existingStyle) existingStyle.remove();
-            
-            style.textContent = `
-                .text-input:focus, .date-input:focus {
-                    border-color: ${theme.icon} !important;
-                    box-shadow: 0 0 0 3px ${theme.accent} !important;
-                }
-                .reminder-list::-webkit-scrollbar-thumb {
-                    background: ${theme.border} !important;
-                    border-radius: 2px;
-                }
-                .reminder-list::-webkit-scrollbar-thumb:hover {
-                    background: ${theme.icon} !important;
-                }
-                .modal-content::-webkit-scrollbar-thumb {
-                    background: ${theme.border} !important;
-                }
-                .modal-content::-webkit-scrollbar-thumb:hover {
-                    background: ${theme.icon} !important;
-                }
-                .child-list::-webkit-scrollbar-thumb {
-                    background: ${theme.border} !important;
-                }
-                .child-list::-webkit-scrollbar-thumb:hover {
-                    background: ${theme.icon} !important;
-                }
+
+            document.querySelectorAll('.modal-content').forEach(modal=>{ modal.classList.add('themed'); modal.style.borderColor = theme.border; });
+            document.querySelectorAll('.btn-primary').forEach(btn=>{ btn.style.background = theme.icon; });
+            document.querySelectorAll('.add-child-btn').forEach(btn=>{ btn.style.color = theme.icon; });
+
+            // 동적 스타일은 id로 덮어쓰기
+            const existing = document.getElementById('dynamic-theme-style');
+            const css = `
+                .text-input:focus, .date-input:focus { border-color: ${theme.icon} !important; box-shadow: 0 0 0 3px ${theme.accent} !important; }
+                .reminder-list::-webkit-scrollbar-thumb { background: ${theme.border} !important; border-radius: 2px; }
+                .reminder-list::-webkit-scrollbar-thumb:hover { background: ${theme.icon} !important; }
+                .modal-content::-webkit-scrollbar-thumb { background: ${theme.border} !important; }
+                .modal-content::-webkit-scrollbar-thumb:hover { background: ${theme.icon} !important; }
+                .child-list::-webkit-scrollbar-thumb { background: ${theme.border} !important; }
+                .child-list::-webkit-scrollbar-thumb:hover { background: ${theme.icon} !important; }
             `;
-            document.head.appendChild(style);
+            if (existing) existing.textContent = css;
+            else{
+                const style = document.createElement('style');
+                style.id = 'dynamic-theme-style';
+                style.textContent = css;
+                document.head.appendChild(style);
+            }
         }
 
-        function selectColor(theme, element, index) {
-            document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+        function selectColor(theme, element, index){
+            document.querySelectorAll('.color-option').forEach(el=>el.classList.remove('selected'));
             element.classList.add('selected');
             currentTheme = theme;
-            
             applyTheme(theme);
-            
-            try {
-                localStorage.setItem('currentTheme', index.toString());
-            } catch (e) {
-                console.error('테마 저장 오류:', e);
-            }
-            
+            try{ localStorage.setItem('currentTheme', index.toString()); }catch(e){ console.error('테마 저장 오류:',e); }
             renderReminders();
         }
 
-        function createStarIcon(isFilled) {
-            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            svg.setAttribute('viewBox', '0 0 24 24');
-            svg.setAttribute('fill', isFilled ? currentTheme.icon : 'none');
-            svg.setAttribute('stroke', currentTheme.icon);
-            svg.setAttribute('stroke-width', '2');
-            svg.setAttribute('stroke-linecap', 'round');
-            svg.setAttribute('stroke-linejoin', 'round');
-            
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            path.setAttribute('d', 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z');
-            
-            svg.appendChild(path);
-            return svg;
+        // XSS 방지: 텍스트 노드 생성 헬퍼
+        function createTextDiv(className, text){
+            const div = document.createElement('div');
+            if (className) div.className = className;
+            div.appendChild(document.createTextNode(text || ''));
+            return div;
         }
 
-        function calculateDday(dateString) {
+        function calculateDday(dateString){
             if (!dateString) return null;
-            
-            try {
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                const targetDate = new Date(dateString);
-                targetDate.setHours(0, 0, 0, 0);
-                
-                if (isNaN(targetDate.getTime())) {
-                    return null;
-                }
-                
-                const diff = Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24));
-                
-                let text, type;
-                if (diff === 0) {
-                    text = 'D-Day';
-                    type = 'today';
-                } else if (diff < 0) {
-                    text = `D+${Math.abs(diff)}`;
-                    type = 'past';
-                } else {
-                    text = `D-${diff}`;
-                    type = 'future';
-                }
-                
-                return { text, type, diff };
-            } catch (e) {
-                console.error('날짜 계산 오류:', e);
-                return null;
-            }
+            try{
+                const today = new Date(); today.setHours(0,0,0,0);
+                const targetDate = new Date(dateString); targetDate.setHours(0,0,0,0);
+                if (isNaN(targetDate.getTime())) return null;
+                const diff = Math.ceil((targetDate - today) / (1000*60*60*24));
+                if (diff === 0) return { text: 'D-Day', type: 'today', diff };
+                if (diff < 0) return { text: `D+${Math.abs(diff)}`, type: 'past', diff };
+                return { text: `D-${diff}`, type: 'future', diff };
+            }catch(e){ console.error('날짜 계산 오류:',e); return null; }
         }
 
-        function filterReminders(list) {
-            return list.filter(reminder => {
+        function filterReminders(list){
+            return list.filter(reminder=>{
                 if (!reminder) return false;
-                
-                switch(currentFilter) {
-                    case 'important':
-                        return reminder.important === true;
-                    case 'project':
-                        return Array.isArray(reminder.children) && reminder.children.length > 0;
-                    default:
-                        return true;
+                switch(currentFilter){
+                    case 'important': return !!reminder.important;
+                    case 'project': return Array.isArray(reminder.children) && reminder.children.length>0;
+                    default: return true;
                 }
             });
         }
 
-        function renderEmptyState() {
-            const list = getElement('reminderList');
-            if (!list) return;
-            
-            list.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-state-icon">📝</div>
-                    <div class="empty-state-text">
-                        아직 리마인더가 없어요<br>
-                        + 버튼을 눌러 추가해보세요!
-                    </div>
-                </div>
-            `;
+        function renderEmptyState(){
+            const list = $id('reminderList'); if (!list) return;
+            list.innerHTML = '';
+            const empty = document.createElement('div'); empty.className='empty-state';
+            const icon = document.createElement('div'); icon.className='empty-state-icon'; icon.textContent='📝';
+            const txt = document.createElement('div'); txt.className='empty-state-text'; txt.innerHTML = '아직 리마인더가 없어요<br>+ 버튼을 눌러 추가해보세요!';
+            empty.appendChild(icon); empty.appendChild(txt); list.appendChild(empty);
         }
 
-        function renderReminders() {
-            const list = getElement('reminderList');
-            if (!list) return;
-            
+        function renderReminders(){
+            const list = $id('reminderList'); if (!list) return;
             list.innerHTML = '';
 
             const filtered = filterReminders(reminders);
-            
-            if (filtered.length === 0) {
-                renderEmptyState();
-                return;
-            }
+            if (!filtered.length){ renderEmptyState(); return; }
 
-            const sorted = [...filtered].sort((a, b) => {
-                if (a.important !== b.important) return b.important - a.important;
-                if (a.date && b.date) {
-                    const dateA = new Date(a.date);
-                    const dateB = new Date(b.date);
-                    if (!isNaN(dateA.getTime()) && !isNaN(dateB.getTime())) {
-                        return dateA - dateB;
-                    }
-                }
+            const sorted = [...filtered].sort((a,b)=>{
+                if ((a.important?1:0) !== (b.important?1:0)) return (b.important?1:0) - (a.important?1:0);
+                if (a.date && b.date){ const da=new Date(a.date), db=new Date(b.date); if(!isNaN(da.getTime()) && !isNaN(db.getTime())) return da - db; }
                 return 0;
             });
 
-            sorted.forEach(reminder => {
+            sorted.forEach(reminder=>{
                 if (!reminder) return;
-                
-                const item = document.createElement('div');
                 const dday = calculateDday(reminder.date);
                 const isUrgent = dday && (dday.type === 'today' || (dday.type === 'future' && dday.diff <= 3));
-                
-                item.className = 'reminder-item' + 
-                    (reminder.children?.length ? ' has-children' : '') +
-                    (isUrgent ? ' urgent-alert' : '');
-                
-                // 드래그 기능 추가
-                item.draggable = true;
+
+                const item = document.createElement('div');
+                item.className = 'reminder-item' + (reminder.children?.length? ' has-children' : '') + (isUrgent? ' urgent-alert' : '');
+                // 모바일 터치 디바이스에서는 드래그 비활성화 (호환성)
+                const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+                item.draggable = !isTouch;
                 item.dataset.id = reminder.id;
-                
-                item.addEventListener('dragstart', handleDragStart);
-                item.addEventListener('dragend', handleDragEnd);
-                item.addEventListener('dragover', handleDragOver);
-                item.addEventListener('drop', handleDrop);
-                item.addEventListener('dragleave', handleDragLeave);
-                
-                // 별 버튼
-                const starBtn = document.createElement('div');
-                starBtn.className = 'star-btn';
-                starBtn.appendChild(createStarIcon(reminder.important));
+
+                // 드래그 이벤트 바인딩 (안전 체크 포함)
+                item.addEventListener('dragstart', function(e){ if (!this.dataset.id) return; draggedItem = this; this.classList.add('dragging'); try{ e.dataTransfer.effectAllowed='move'; e.dataTransfer.setData('text/plain', this.dataset.id); }catch(_){}});
+                item.addEventListener('dragend', function(){ if(this) this.classList.remove('dragging'); document.querySelectorAll('.reminder-item').forEach(i=>i.classList.remove('drag-over')); draggedItem = null; });
+                item.addEventListener('dragover', function(e){ if (e.preventDefault) e.preventDefault(); if (this !== draggedItem) this.classList.add('drag-over'); e.dataTransfer && (e.dataTransfer.dropEffect='move'); return false; });
+                item.addEventListener('drop', function(e){ if (e.stopPropagation) e.stopPropagation(); if (!draggedItem || !this.dataset.id) return false; if (draggedItem === this) return false; const draggedId = draggedItem.dataset.id; const droppedId = this.dataset.id; const draggedIndex = reminders.findIndex(r=>r.id===draggedId); const droppedIndex = reminders.findIndex(r=>r.id===droppedId); if (draggedIndex!==-1 && droppedIndex!==-1){ const [removed] = reminders.splice(draggedIndex,1); reminders.splice(droppedIndex,0,removed); saveToStorage(); renderReminders(); } return false; });
+                item.addEventListener('dragleave', function(){ this.classList.remove('drag-over'); });
+
+                // 별
+                const starBtn = document.createElement('div'); starBtn.className='star-btn'; starBtn.appendChild(createStarIcon(!!reminder.important));
+                starBtn.addEventListener('click', function(e){ e.stopPropagation(); toggleImportant(reminder.id); });
                 item.appendChild(starBtn);
-                
-                // 토글 버튼 (프로젝트에만 표시)
-                if (reminder.children?.length) {
-                    const toggleBtn = document.createElement('div');
-                    toggleBtn.className = 'toggle-btn' + (reminder.collapsed ? ' collapsed' : '');
-                    toggleBtn.textContent = '▼';
-                    toggleBtn.style.color = currentTheme.icon;
-                    toggleBtn.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        toggleChildren(reminder.id);
-                    });
-                    toggleBtn.addEventListener('mouseenter', () => {
-                        toggleBtn.style.color = currentTheme.border;
-                    });
-                    toggleBtn.addEventListener('mouseleave', () => {
-                        toggleBtn.style.color = currentTheme.icon;
-                    });
+
+                // 토글 (프로젝트)
+                if (reminder.children?.length){
+                    const toggleBtn = document.createElement('div'); toggleBtn.className = 'toggle-btn' + (reminder.collapsed? ' collapsed' : ''); toggleBtn.textContent = '▼'; toggleBtn.style.color = currentTheme.icon;
+                    toggleBtn.addEventListener('click', (e)=>{ e.stopPropagation(); toggleChildren(reminder.id); });
+                    toggleBtn.addEventListener('mouseenter', ()=>{ toggleBtn.style.color = currentTheme.border; });
+                    toggleBtn.addEventListener('mouseleave', ()=>{ toggleBtn.style.color = currentTheme.icon; });
                     item.appendChild(toggleBtn);
                 }
-                
-                const content = document.createElement('div');
-                content.className = 'reminder-content';
-                content.innerHTML = `<div class="reminder-text">${reminder.text || ''}</div>`;
-                
+
+                const content = document.createElement('div'); content.className = 'reminder-content';
+                const textDiv = createTextDiv('reminder-text', reminder.text || '');
+                content.appendChild(textDiv);
                 item.appendChild(content);
-                
-                if (dday) {
-                    const ddayEl = document.createElement('div');
-                    ddayEl.className = `reminder-dday ${dday.type}`;
-                    ddayEl.textContent = dday.text;
-                    item.appendChild(ddayEl);
-                }
-                
-                const deleteBtn = document.createElement('div');
-                deleteBtn.className = 'delete-btn';
-                deleteBtn.textContent = '×';
+
+                if (dday){ const ddayEl = createTextDiv('reminder-dday ' + dday.type, dday.text); item.appendChild(ddayEl); }
+
+                const deleteBtn = document.createElement('div'); deleteBtn.className='delete-btn'; deleteBtn.textContent='×'; deleteBtn.addEventListener('click', function(e){ e.stopPropagation(); deleteReminder(reminder.id); });
                 item.appendChild(deleteBtn);
 
-                starBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    toggleImportant(reminder.id);
-                });
-
-                deleteBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    deleteReminder(reminder.id);
-                });
-
-                item.addEventListener('click', () => editReminder(reminder.id));
+                item.addEventListener('click', function(){ editReminder(reminder.id); });
 
                 list.appendChild(item);
 
-                if (reminder.children?.length) {
-                    const childContainer = document.createElement('div');
-                    childContainer.className = 'child-items';
-                    if (!reminder.collapsed) {
-                        childContainer.classList.add('expanded');
-                    }
+                // 하위 항목 렌더
+                if (reminder.children?.length){
+                    const childContainer = document.createElement('div'); childContainer.className = 'child-items';
+                    if (!reminder.collapsed) childContainer.classList.add('expanded');
                     childContainer.style.borderLeftColor = currentTheme.line;
-                    
-                    reminder.children.forEach((child, index) => {
-                        const childItem = document.createElement('div');
-                        childItem.className = 'child-item' + (child.completed ? ' completed' : '');
-                        
-                        const checkbox = document.createElement('input');
-                        checkbox.type = 'checkbox';
-                        checkbox.className = 'child-checkbox';
-                        checkbox.checked = child.completed || false;
-                        checkbox.addEventListener('click', (e) => {
-                            e.stopPropagation();
-                            toggleChildComplete(reminder.id, index);
-                        });
-                        
-                        const text = document.createElement('span');
-                        text.className = 'child-text';
-                        text.textContent = child.text || '';
-                        
-                        childItem.appendChild(checkbox);
-                        childItem.appendChild(text);
-                        childContainer.appendChild(childItem);
+
+                    reminder.children.forEach((child, idx)=>{
+                        const childItem = document.createElement('div'); childItem.className = 'child-item' + (child.completed? ' completed' : '');
+                        const checkbox = document.createElement('input'); checkbox.type='checkbox'; checkbox.className='child-checkbox'; checkbox.checked = !!child.completed;
+                        checkbox.addEventListener('click', function(e){ e.stopPropagation(); toggleChildComplete(reminder.id, idx); });
+                        const text = document.createElement('span'); text.className='child-text'; text.appendChild(document.createTextNode(child.text || ''));
+                        childItem.appendChild(checkbox); childItem.appendChild(text); childContainer.appendChild(childItem);
                     });
-                    
+
                     list.appendChild(childContainer);
                 }
             });
         }
 
-        function toggleChildren(id) {
-            const reminder = reminders.find(r => r && r.id === id);
-            if (reminder) {
-                reminder.collapsed = !reminder.collapsed;
-                saveToStorage();
-                renderReminders();
-            }
+        function toggleChildren(id){ const r = reminders.find(rr=>rr && rr.id===id); if (r){ r.collapsed = !r.collapsed; saveToStorage(); renderReminders(); } }
+        function toggleChildComplete(reminderId, childIndex){ const r = reminders.find(rr=>rr && rr.id===reminderId); if (r && Array.isArray(r.children) && r.children[childIndex]){ r.children[childIndex].completed = !r.children[childIndex].completed; saveToStorage(); renderReminders(); } }
+        function toggleImportant(id){ const r = reminders.find(rr=>rr && rr.id===id); if (r){ r.important = !r.important; saveToStorage(); renderReminders(); } }
+        function deleteReminder(id){ reminders = reminders.filter(r=>r && r.id!==id); saveToStorage(); renderReminders(); }
+
+        // 편집/추가
+        function editReminder(id){ const reminder = reminders.find(r=>r && r.id===id); if (!reminder) return; editingId = id; tempChildren = Array.isArray(reminder.children)? reminder.children.map(c=>c.text||'') : []; const modalTitle = $id('modalTitle'); const reminderText = $id('reminderText'); const reminderDate = $id('reminderDate'); const isImportant = $id('isImportant'); const hasChildren = $id('hasChildren'); const childList = $id('childList'); const reminderModal = $id('reminderModal'); if (modalTitle) modalTitle.textContent='리마인더 수정'; if (reminderText) reminderText.value = reminder.text || ''; if (reminderDate) reminderDate.value = reminder.date || ''; if (isImportant) isImportant.checked = !!reminder.important; if (hasChildren) hasChildren.checked = reminder.children?.length>0; if (childList && reminder.children?.length>0){ childList.style.display='block'; renderTempChildren(); } else if (childList) childList.style.display='none'; if (reminderModal) reminderModal.classList.add('active'); // 포커스 안정적으로 처리
+            if (reminderText){ requestAnimationFrame(()=>{ try{ reminderText.focus(); }catch(_){} }); }
         }
 
-        function toggleChildComplete(reminderId, childIndex) {
-            const reminder = reminders.find(r => r && r.id === reminderId);
-            if (reminder && Array.isArray(reminder.children) && reminder.children[childIndex]) {
-                reminder.children[childIndex].completed = !reminder.children[childIndex].completed;
-                saveToStorage();
-                renderReminders();
-            }
-        }
+        function renderTempChildren(){ const container = $id('childItems'); if (!container) return; container.innerHTML=''; tempChildren.forEach((child, index)=>{ const item = document.createElement('div'); item.style.cssText='display:flex;gap:6px;margin-bottom:6px;align-items:center'; const span = document.createElement('span'); span.style.flex='1'; span.style.fontSize='12px'; span.style.color='#666'; span.textContent = '• ' + (child || ''); const btn = document.createElement('span'); btn.style.fontSize='18px'; btn.style.color='#ddd'; btn.style.cursor='pointer'; btn.textContent = '×'; btn.addEventListener('mouseover', ()=>btn.style.color='#ff6b9d'); btn.addEventListener('mouseout', ()=>btn.style.color='#ddd'); btn.addEventListener('click', ()=>{ removeTempChild(index); }); item.appendChild(span); item.appendChild(btn); container.appendChild(item); }); }
 
-        function toggleImportant(id) {
-            const reminder = reminders.find(r => r && r.id === id);
-            if (reminder) {
-                reminder.important = !reminder.important;
-                saveToStorage();
-                renderReminders();
-            }
-        }
+        function removeTempChild(index){ if (index>=0 && index<tempChildren.length){ tempChildren.splice(index,1); renderTempChildren(); } }
 
-        function deleteReminder(id) {
-            reminders = reminders.filter(r => r && r.id !== id);
-            saveToStorage();
-            renderReminders();
-        }
+        // 이벤트 바인딩: 필터 버튼
+        document.querySelectorAll('.filter-btn').forEach(btn=>{ btn.addEventListener('click', ()=>{ document.querySelectorAll('.filter-btn').forEach(b=>{ b.classList.remove('active'); b.style.background = currentTheme.accent; b.style.color = currentTheme.icon; }); btn.classList.add('active'); btn.style.background = currentTheme.icon; btn.style.color = 'white'; currentFilter = btn.dataset.filter || 'all'; renderReminders(); }); });
 
-        // 드래그 앤 드롭 핸들러
-        function handleDragStart(e) {
-            draggedItem = this;
-            this.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/html', this.innerHTML);
-        }
+        const addBtn = $id('addBtn'); if (addBtn) addBtn.addEventListener('click', openAddModal);
 
-        function handleDragEnd(e) {
-            this.classList.remove('dragging');
-            document.querySelectorAll('.reminder-item').forEach(item => {
-                item.classList.remove('drag-over');
-            });
-        }
+        function openAddModal(){ editingId = null; tempChildren = []; const modalTitle = $id('modalTitle'); const reminderText = $id('reminderText'); const reminderDate = $id('reminderDate'); const isImportant = $id('isImportant'); const hasChildren = $id('hasChildren'); const childList = $id('childList'); const reminderModal = $id('reminderModal'); if (modalTitle) modalTitle.textContent='리마인더 추가'; if (reminderText) reminderText.value=''; if (reminderDate) reminderDate.value=''; if (isImportant) isImportant.checked=false; if (hasChildren) hasChildren.checked=false; if (childList) childList.style.display='none'; if (reminderModal) reminderModal.classList.add('active'); if (reminderText) requestAnimationFrame(()=>{ try{ reminderText.focus(); }catch(_){} }); }
 
-        function handleDragOver(e) {
-            if (e.preventDefault) {
-                e.preventDefault();
-            }
-            e.dataTransfer.dropEffect = 'move';
-            
-            if (this !== draggedItem) {
-                this.classList.add('drag-over');
-            }
-            return false;
-        }
+        const hasChildrenEl = $id('hasChildren'); if (hasChildrenEl) hasChildrenEl.addEventListener('change', (e)=>{ const childList = $id('childList'); if (childList) childList.style.display = e.target.checked ? 'block' : 'none'; });
 
-        function handleDragLeave(e) {
-            this.classList.remove('drag-over');
-        }
+        const addChildBtn = $id('addChildBtn'); const childInput = $id('childInput'); if (addChildBtn) addChildBtn.addEventListener('click', addChildItem); if (childInput) childInput.addEventListener('keypress', (e)=>{ if (e.key === 'Enter'){ e.preventDefault(); addChildItem(); } });
+        function addChildItem(){ const input = $id('childInput'); if (input && input.value.trim()){ tempChildren.push(input.value.trim()); input.value=''; renderTempChildren(); } }
 
-        function handleDrop(e) {
-            if (e.stopPropagation) {
-                e.stopPropagation();
-            }
-            
-            if (draggedItem !== this) {
-                const draggedId = parseInt(draggedItem.dataset.id);
-                const droppedId = parseInt(this.dataset.id);
-                
-                const draggedIndex = reminders.findIndex(r => r.id === draggedId);
-                const droppedIndex = reminders.findIndex(r => r.id === droppedId);
-                
-                if (draggedIndex !== -1 && droppedIndex !== -1) {
-                    const [removed] = reminders.splice(draggedIndex, 1);
-                    reminders.splice(droppedIndex, 0, removed);
-                    saveToStorage();
-                    renderReminders();
-                }
-            }
-            
-            return false;
-        }
+        const saveBtn = $id('saveBtn'); if (saveBtn) saveBtn.addEventListener('click', saveReminder);
+        const reminderTextInput = $id('reminderText'); if (reminderTextInput) reminderTextInput.addEventListener('keypress', (e)=>{ if (e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); saveReminder(); } });
 
-        function editReminder(id) {
-            const reminder = reminders.find(r => r && r.id === id);
-            if (!reminder) return;
-
-            editingId = id;
-            tempChildren = Array.isArray(reminder.children) ? 
-                reminder.children.map(c => c.text || '') : [];
-            
-            const modalTitle = getElement('modalTitle');
-            const reminderText = getElement('reminderText');
-            const reminderDate = getElement('reminderDate');
-            const isImportant = getElement('isImportant');
-            const hasChildren = getElement('hasChildren');
-            const childList = getElement('childList');
-            const reminderModal = getElement('reminderModal');
-            
-            if (modalTitle) modalTitle.textContent = '리마인더 수정';
-            if (reminderText) reminderText.value = reminder.text || '';
-            if (reminderDate) reminderDate.value = reminder.date || '';
-            if (isImportant) isImportant.checked = reminder.important || false;
-            if (hasChildren) hasChildren.checked = reminder.children?.length > 0;
-            
-            if (childList && reminder.children?.length > 0) {
-                childList.style.display = 'block';
-                renderTempChildren();
-            } else if (childList) {
-                childList.style.display = 'none';
-            }
-            
-            if (reminderModal) reminderModal.classList.add('active');
-        }
-
-        function renderTempChildren() {
-            const container = getElement('childItems');
-            if (!container) return;
-            
-            container.innerHTML = '';
-            tempChildren.forEach((child, index) => {
-                const item = document.createElement('div');
-                item.style.cssText = 'display: flex; gap: 6px; margin-bottom: 6px; align-items: center;';
-                item.innerHTML = `
-                    <span style="flex: 1; font-size: 12px; color: #666;">• ${child || ''}</span>
-                    <span style="font-size: 18px; color: #ddd; cursor: pointer; transition: color 0.2s;" 
-                          onmouseover="this.style.color='#ff6b9d'" 
-                          onmouseout="this.style.color='#ddd'" 
-                          onclick="removeTempChild(${index})">×</span>
-                `;
-                container.appendChild(item);
-            });
-        }
-
-        window.removeTempChild = function(index) {
-            if (index >= 0 && index < tempChildren.length) {
-                tempChildren.splice(index, 1);
-                renderTempChildren();
-            }
-        }
-
-        // 필터 버튼 이벤트
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.filter-btn').forEach(b => {
-                    b.classList.remove('active');
-                    b.style.background = currentTheme.accent;
-                    b.style.color = currentTheme.icon;
-                });
-                btn.classList.add('active');
-                btn.style.background = currentTheme.icon;
-                btn.style.color = 'white';
-                currentFilter = btn.dataset.filter || 'all';
-                renderReminders();
-            });
-        });
-
-        const addBtn = getElement('addBtn');
-        if (addBtn) {
-            addBtn.addEventListener('click', openAddModal);
-        }
-
-        function openAddModal() {
-            editingId = null;
-            tempChildren = [];
-            
-            const modalTitle = getElement('modalTitle');
-            const reminderText = getElement('reminderText');
-            const reminderDate = getElement('reminderDate');
-            const isImportant = getElement('isImportant');
-            const hasChildren = getElement('hasChildren');
-            const childList = getElement('childList');
-            const reminderModal = getElement('reminderModal');
-            
-            if (modalTitle) modalTitle.textContent = '리마인더 추가';
-            if (reminderText) reminderText.value = '';
-            if (reminderDate) reminderDate.value = '';
-            if (isImportant) isImportant.checked = false;
-            if (hasChildren) hasChildren.checked = false;
-            if (childList) childList.style.display = 'none';
-            if (reminderModal) reminderModal.classList.add('active');
-            
-            // 입력창에 포커스
-            if (reminderText) {
-                setTimeout(() => reminderText.focus(), 100);
-            }
-        }
-
-        const hasChildren = getElement('hasChildren');
-        if (hasChildren) {
-            hasChildren.addEventListener('change', (e) => {
-                const childList = getElement('childList');
-                if (childList) {
-                    childList.style.display = e.target.checked ? 'block' : 'none';
-                }
-            });
-        }
-
-        const addChildBtn = getElement('addChildBtn');
-        const childInput = getElement('childInput');
-        
-        if (addChildBtn) {
-            addChildBtn.addEventListener('click', addChildItem);
-        }
-        
-        if (childInput) {
-            childInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    addChildItem();
-                }
-            });
-        }
-        
-        function addChildItem() {
-            const input = getElement('childInput');
-            if (input && input.value.trim()) {
-                tempChildren.push(input.value.trim());
-                input.value = '';
-                renderTempChildren();
-            }
-        }
-
-        const saveBtn = getElement('saveBtn');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', saveReminder);
-        }
-        
-        // Enter 키로 저장
-        const reminderTextInput = getElement('reminderText');
-        const reminderDateInput = getElement('reminderDate');
-        
-        if (reminderTextInput) {
-            reminderTextInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    saveReminder();
-                }
-            });
-        }
-        
-        function saveReminder() {
-            const reminderText = getElement('reminderText');
-            const reminderDate = getElement('reminderDate');
-            const isImportant = getElement('isImportant');
-            const hasChildrenCheckbox = getElement('hasChildren');
-            const reminderModal = getElement('reminderModal');
-            
-            if (!reminderText) return;
-            
-            const text = reminderText.value.trim();
-            if (!text) {
-                alert('할 일을 입력해주세요!');
-                reminderText.focus();
-                return;
-            }
-
+        function saveReminder(){ const reminderText = $id('reminderText'); const reminderDate = $id('reminderDate'); const isImportant = $id('isImportant'); const hasChildrenCheckbox = $id('hasChildren'); const reminderModal = $id('reminderModal'); if (!reminderText) return; const text = reminderText.value.trim(); if (!text){ alert('할 일을 입력해주세요!'); reminderText.focus(); return; }
             const newReminder = {
-                id: editingId || Date.now(),
+                id: editingId || generateId(),
                 text: text,
                 date: reminderDate ? reminderDate.value : '',
                 important: isImportant ? isImportant.checked : false,
-                children: (hasChildrenCheckbox && hasChildrenCheckbox.checked) ? 
-                    tempChildren.map(c => ({ text: c, completed: false })) : [],
+                children: (hasChildrenCheckbox && hasChildrenCheckbox.checked) ? tempChildren.map(c=>({ text: c, completed: false })) : [],
                 collapsed: false
             };
+            if (editingId){ const index = reminders.findIndex(r=>r && r.id===editingId); if (index !== -1){ const oldCollapsed = reminders[index].collapsed; newReminder.collapsed = oldCollapsed; reminders[index] = newReminder; } }else{ reminders.push(newReminder); }
+            saveToStorage(); if (reminderModal) reminderModal.classList.remove('active'); renderReminders(); }
 
-            if (editingId) {
-                const index = reminders.findIndex(r => r && r.id === editingId);
-                if (index !== -1) {
-                    const oldCollapsed = reminders[index].collapsed;
-                    newReminder.collapsed = oldCollapsed;
-                    reminders[index] = newReminder;
-                }
-            } else {
-                reminders.push(newReminder);
-            }
+        const cancelBtn = $id('cancelBtn'); if (cancelBtn) cancelBtn.addEventListener('click', closeModal);
+        function closeModal(){ const reminderModal = $id('reminderModal'); if (reminderModal) reminderModal.classList.remove('active'); }
 
-            saveToStorage();
-            if (reminderModal) reminderModal.classList.remove('active');
-            renderReminders();
-        }
+        // ESC로 닫기
+        document.addEventListener('keydown', (e)=>{ if (e.key === 'Escape'){ const reminderModal = $id('reminderModal'); const colorModal = $id('colorModal'); if (reminderModal && reminderModal.classList.contains('active')) reminderModal.classList.remove('active'); if (colorModal && colorModal.classList.contains('active')) colorModal.classList.remove('active'); } });
 
-        const cancelBtn = getElement('cancelBtn');
-        if (cancelBtn) {
-            cancelBtn.addEventListener('click', closeModal);
-        }
-        
-        function closeModal() {
-            const reminderModal = getElement('reminderModal');
-            if (reminderModal) reminderModal.classList.remove('active');
-        }
-        
-        // ESC 키로 모달 닫기
-        document.addEventListener('keydown', (e) => {
-            if (e.key === 'Escape') {
-                const reminderModal = getElement('reminderModal');
-                const colorModal = getElement('colorModal');
-                if (reminderModal && reminderModal.classList.contains('active')) {
-                    reminderModal.classList.remove('active');
-                }
-                if (colorModal && colorModal.classList.contains('active')) {
-                    colorModal.classList.remove('active');
-                }
-            }
-        });
-        
-        // 모달 배경 클릭 시 닫기
-        const reminderModal = getElement('reminderModal');
-        const colorModal = getElement('colorModal');
-        
-        if (reminderModal) {
-            reminderModal.addEventListener('click', (e) => {
-                if (e.target === reminderModal) {
-                    reminderModal.classList.remove('active');
-                }
-            });
-        }
-        
-        if (colorModal) {
-            colorModal.addEventListener('click', (e) => {
-                if (e.target === colorModal) {
-                    colorModal.classList.remove('active');
-                }
-            });
-        }
+        // 모달 배경 클릭 닫기
+        const reminderModal = $id('reminderModal'); const colorModal = $id('colorModal'); if (reminderModal) reminderModal.addEventListener('click', (e)=>{ if (e.target === reminderModal) reminderModal.classList.remove('active'); }); if (colorModal) colorModal.addEventListener('click', (e)=>{ if (e.target === colorModal) colorModal.classList.remove('active'); });
 
-        const colorBtn = getElement('colorBtn');
-        if (colorBtn) {
-            colorBtn.addEventListener('click', () => {
-                const colorModal = getElement('colorModal');
-                if (colorModal) colorModal.classList.add('active');
-            });
-        }
-
-        const closeColorBtn = getElement('closeColorBtn');
-        if (closeColorBtn) {
-            closeColorBtn.addEventListener('click', () => {
-                const colorModal = getElement('colorModal');
-                if (colorModal) colorModal.classList.remove('active');
-            });
-        }
+        const colorBtn = $id('colorBtn'); if (colorBtn) colorBtn.addEventListener('click', ()=>{ const colorModal = $id('colorModal'); if (colorModal) colorModal.classList.add('active'); });
+        const closeColorBtn = $id('closeColorBtn'); if (closeColorBtn) closeColorBtn.addEventListener('click', ()=>{ const colorModal = $id('colorModal'); if (colorModal) colorModal.classList.remove('active'); });
 
         // 초기화
-        loadFromStorage();
-        applyTheme(currentTheme);
-        
-        // 초기 필터 버튼 색상 적용
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            if (btn.classList.contains('active')) {
-                btn.style.background = currentTheme.icon;
-                btn.style.color = 'white';
-            } else {
-                btn.style.background = currentTheme.accent;
-                btn.style.color = currentTheme.icon;
-            }
-        });
-        
+        loadFromStorage(); applyTheme(currentTheme);
+        document.querySelectorAll('.filter-btn').forEach(btn=>{ if (btn.classList.contains('active')){ btn.style.background = currentTheme.icon; btn.style.color = 'white'; } else { btn.style.background = currentTheme.accent; btn.style.color = currentTheme.icon; } });
         renderReminders();
+
+        // SVG 생성 (스타 아이콘)
+        function createStarIcon(isFilled){
+            const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+            svg.setAttribute('viewBox','0 0 24 24');
+            svg.setAttribute('width','16'); svg.setAttribute('height','16');
+            svg.setAttribute('fill', isFilled ? currentTheme.icon : 'none');
+            svg.setAttribute('stroke', currentTheme.icon);
+            svg.setAttribute('stroke-width','2'); svg.setAttribute('stroke-linecap','round'); svg.setAttribute('stroke-linejoin','round');
+            const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+            path.setAttribute('d','M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z');
+            svg.appendChild(path); return svg;
+        }
+
+        // 외부 접근을 막기 위해 전역에 노출하지 않음
+    })();
     </script>
 </body>
 </html>
