@@ -142,15 +142,6 @@
             border-radius: 2px;
         }
 
-        .reminder-list::-webkit-scrollbar-thumb {
-            background: rgba(201, 169, 233, 0.3);
-            border-radius: 2px;
-        }
-
-        .reminder-list::-webkit-scrollbar-thumb:hover {
-            background: rgba(201, 169, 233, 0.5);
-        }
-
         .empty-state {
             text-align: center;
             padding: 40px 20px;
@@ -864,6 +855,13 @@
                 .text-input:focus, .date-input:focus {
                     border-color: ${theme.icon} !important;
                     box-shadow: 0 0 0 3px ${theme.accent} !important;
+                }
+                .reminder-list::-webkit-scrollbar-thumb {
+                    background: ${theme.border} !important;
+                    border-radius: 2px;
+                }
+                .reminder-list::-webkit-scrollbar-thumb:hover {
+                    background: ${theme.icon} !important;
                 }
                 .modal-content::-webkit-scrollbar-thumb {
                     background: ${theme.border} !important;
